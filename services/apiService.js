@@ -32,8 +32,8 @@ async function loginUser(email, password) {
  * Automatically handles 401 Unauthorized errors by silently refreshing
  * the token using the stored user credentials before retrying.
  */
-async function secureFetch(endpoint, sessionId, method = 'GET', body = null) {
-    const session = sessionStore.get(sessionId);
+async function secureFetch(endpoint, sessionId, res = null, method = 'GET', body = null) {
+    const session = sessionStore.decrypt(sessionId);
     if (!session) {
         throw new Error('Session expired or invalid. Please login again.');
     }
@@ -57,16 +57,20 @@ async function secureFetch(endpoint, sessionId, method = 'GET', body = null) {
             // Relogin with stored credentials
             const newToken = await loginUser(session.email, session.password);
             
-            // Save newly issued token
+            // Generate newly issued session object/token
             session.token = newToken;
-            sessionStore.set(sessionId, session);
+            const newSessionId = sessionStore.encrypt(session);
+            
+            // Forward it to the client for subsequent requests if we can
+            if (res && typeof res.setHeader === 'function') {
+                res.setHeader('x-new-session-id', newSessionId);
+            }
 
             // Retry original request seamlessly
             options.headers['Authorization'] = `Bearer ${newToken}`;
             response = await fetch(`${API_BASE}${endpoint}`, options);
             console.log(`[Auto-Refresh] Successfully refreshed and retried request.`);
         } catch (error) {
-            sessionStore.delete(sessionId);
             throw new Error('Auto-refresh logic failed. Credentials might have changed. Please relogin.');
         }
     }

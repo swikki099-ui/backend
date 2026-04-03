@@ -17,12 +17,9 @@ router.post('/login', async (req, res) => {
         // Authenticate with college API
         const token = await loginUser(email, password);
         
-        // Generate a secure proxy session ID for the frontend client
+        // Generate a secure encrypted token for the frontend client
         // This abstracts away the target JWT, ensuring it stays hidden natively in the backend cache.
-        const sessionId = crypto.randomUUID();
-        
-        // Store user mapping in memory
-        sessionStore.set(sessionId, { email, password, token });
+        const sessionId = sessionStore.encrypt({ email, password, token });
 
         res.json({ message: 'Login successful', sessionId });
     } catch (error) {
@@ -32,10 +29,8 @@ router.post('/login', async (req, res) => {
 
 // POST /auth/logout
 router.post('/logout', (req, res) => {
-    const sessionId = req.headers['x-session-id'];
-    if (sessionId) {
-        sessionStore.delete(sessionId);
-    }
+    // Stateless sessions cannot be explicitly deleted server-side without a blacklist. 
+    // The client dropping the token is sufficient for this scope.
     res.json({ message: 'Logged out successfully' });
 });
 

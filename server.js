@@ -25,6 +25,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal Server Architecture Error', message: err.message });
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Production-Ready Refactored Backend Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`✅ Production-Ready Refactored Backend Server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
