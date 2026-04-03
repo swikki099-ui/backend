@@ -1,9 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
 // Import modular routes
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
+const appRoutes = require('./routes/app');
+const docsRoutes = require('./routes/docs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +21,12 @@ app.use('/auth', authRoutes);
 
 // General data endpoints protected by custom generic session headers
 app.use('/api', apiRoutes);
+
+// App update endpoint for version checking
+app.use('/app', appRoutes);
+
+// Human-readable API Documentation
+app.use('/docs', docsRoutes);
 
 // Root Endpoint for deployment verification
 app.get('/', (req, res) => {
