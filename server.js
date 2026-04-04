@@ -6,6 +6,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
 const appRoutes = require('./routes/app');
+const idRoutes = require('./routes/id');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,10 @@ app.use('/api', apiRoutes);
 
 // App update endpoint for version checking
 app.use('/app', appRoutes);
+
+// Digital Student ID QR system
+app.use('/id', idRoutes);
+
 
 // Root Endpoint for deployment verification
 app.get('/', (req, res) => {
