@@ -25,16 +25,18 @@ async function loginAndSync(email, password) {
         profile_image: profile.picture || ''
     };
 
+    console.log(`🔍 Extracted User Data for Syncing: ${userData.name} (${userData.college_id})`);
+
     // 4. Sync with Turso DB (UPSERT)
-    // We check if user exists by college_id
     try {
+        console.log(`📡 Connecting to Turso to sync data...`);
         const existingUser = await db.execute({
             sql: 'SELECT id FROM users WHERE college_id = ?',
             args: [userData.college_id]
         });
 
         if (existingUser.rows.length === 0) {
-            // INSERT new user
+            console.log(`🆕 Creating NEW user: ${userData.name}`);
             await db.execute({
                 sql: `INSERT INTO users (
                     college_id, name, roll_no, course, branch, semester, section, email, phone, profile_image
@@ -46,7 +48,7 @@ async function loginAndSync(email, password) {
                 ]
             });
         } else {
-            // UPDATE existing user
+            console.log(`🔄 UPDATING existing user: ${userData.name}`);
             await db.execute({
                 sql: `UPDATE users SET 
                     name = ?, roll_no = ?, course = ?, branch = ?, semester = ?, 
@@ -60,12 +62,13 @@ async function loginAndSync(email, password) {
             });
         }
         
-        // Fetch the synced user to return (including our internal ID)
         const finalUser = await db.execute({
             sql: 'SELECT * FROM users WHERE college_id = ?',
             args: [userData.college_id]
         });
         
+        console.log(`✅ User sync completed successfully for ${userData.name}`);
+
         return {
             user: finalUser.rows[0],
             token: token
@@ -75,6 +78,7 @@ async function loginAndSync(email, password) {
         throw new Error('Failed to synchronize user data with local database.');
     }
 }
+
 
 /**
  * Retrieve a user from the database by their internal ID.

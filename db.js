@@ -3,14 +3,18 @@ const { createClient } = require('@libsql/client');
 const url = process.env.TURSO_DB_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
 
-if (!url) {
-  console.warn('TURSO_DB_URL is not defined in environment variables.');
+// Logging for deployment debugging
+if (url) {
+  console.log('✅ Found TURSO_DB_URL');
+} else {
+  console.warn('⚠️ TURSO_DB_URL is MISSING from environment variables.');
 }
 
 const db = createClient({
-  url: url || 'file:local.db', // Fallback to local file if URL is missing
+  url: url || 'file:local.db', 
   authToken: authToken,
 });
+
 
 /**
  * Initialize the database schema.
