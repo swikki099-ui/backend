@@ -9,7 +9,7 @@ const { readBarcode } = require('../utils/barcodeReader');
  * 3. Extract barcode from ID card.
  * 4. Update the user record.
  */
-async function completeProfile(userId, profileImage, idCardImage) {
+async function completeProfile(userId, profileImage, idCardImage, confirmedBarcode = null) {
     if (!profileImage || !idCardImage) {
         throw new Error('Profile and ID card images are required.');
     }
@@ -22,8 +22,8 @@ async function completeProfile(userId, profileImage, idCardImage) {
     // 2. Upload ID Card Image (Not saved to DB but kept in storage)
     const idCardUrl = await uploadFile(idCardImage.buffer, idCardImage.originalname, 'id-cards');
 
-    // 3. Extract Barcode (Best Effort)
-    const barcode = await readBarcode(idCardImage.buffer);
+    // 3. Extract Barcode (Skip if already confirmed by app)
+    const barcode = confirmedBarcode || await readBarcode(idCardImage.buffer);
 
     if (!barcode) {
         return {

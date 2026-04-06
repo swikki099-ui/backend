@@ -53,12 +53,13 @@ router.post('/complete', authenticate, upload.fields([
     try {
         const profileImage = req.files['profileImage'] ? req.files['profileImage'][0] : null;
         const idCardImage = req.files['idCardImage'] ? req.files['idCardImage'][0] : null;
+        const { confirmedBarcode } = req.body;
 
         if (!profileImage || !idCardImage) {
             return res.status(400).json({ error: 'Both profileImage and idCardImage are required' });
         }
 
-        const result = await completeProfile(req.userId, profileImage, idCardImage);
+        const result = await completeProfile(req.userId, profileImage, idCardImage, confirmedBarcode);
         
         if (!result.success) {
             return res.status(200).json(result); // Return 200 to handle fallback gracefully in frontend
