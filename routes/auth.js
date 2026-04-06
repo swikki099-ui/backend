@@ -88,9 +88,12 @@ router.get('/me', async (req, res) => {
             return res.status(404).json({ error: 'User not found in local database' });
         }
 
+        // A profile is complete only if profile_complete is true AND they have a barcode bound.
+        const isActuallyComplete = !!user.profile_complete && !!user.barcode_id;
+
         res.json({ 
             user,
-            profile_complete: !!user.profile_complete
+            profile_complete: isActuallyComplete
         });
     } catch (error) {
         console.error('❌ Internal server error in /me:', error);
