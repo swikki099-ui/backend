@@ -36,7 +36,7 @@ async function completeProfile(userId, profileImage, idCardImage, confirmedBarco
 
     // 4. Ensure barcode uniqueness
     const existing = await db.execute({
-        sql: 'SELECT id FROM users WHERE barcode_id = ? AND id != ?',
+        sql: 'SELECT id FROM users WHERE barcd_id = ? AND id != ?',
         args: [barcode, userId]
     });
 
@@ -48,7 +48,7 @@ async function completeProfile(userId, profileImage, idCardImage, confirmedBarco
     await db.execute({
         sql: `UPDATE users SET 
             profile_image = ?, 
-            barcode_id = ?, 
+            barcd_id = ?, 
             profile_complete = 1, 
             updated_at = CURRENT_TIMESTAMP 
             WHERE id = ?`,
@@ -73,7 +73,7 @@ async function bindBarcode(userId, barcode) {
 
     // Check uniqueness
     const existing = await db.execute({
-        sql: 'SELECT id FROM users WHERE barcode_id = ? AND id != ?',
+        sql: 'SELECT id FROM users WHERE barcd_id = ? AND id != ?',
         args: [barcode, userId]
     });
 
@@ -84,7 +84,7 @@ async function bindBarcode(userId, barcode) {
     // Update user
     await db.execute({
         sql: `UPDATE users SET 
-            barcode_id = ?, 
+            barcd_id = ?, 
             profile_complete = 1, 
             updated_at = CURRENT_TIMESTAMP 
             WHERE id = ?`,

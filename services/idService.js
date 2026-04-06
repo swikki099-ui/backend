@@ -41,7 +41,7 @@ async function scanQR(qrData) {
             ? `SELECT name, roll_no, course, branch, semester, phone, email, profile_image 
                FROM users WHERE college_id = ?`
             : `SELECT name, roll_no, course, branch, semester, phone, email, profile_image 
-               FROM users WHERE barcode_id = ?`;
+               FROM users WHERE barcd_id = ?`;
         
         const searchValue = isDigitalQR ? payload.id : qrData;
 

@@ -34,7 +34,7 @@ async function initDb() {
         email TEXT,
         phone TEXT,
         profile_image TEXT,
-        barcode_id TEXT UNIQUE,
+        barcd_id TEXT UNIQUE,
         profile_complete BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -43,7 +43,7 @@ async function initDb() {
 
     // Safeguard: Ensure required columns exist if table was created previously
     const columns = [
-      "ALTER TABLE users ADD COLUMN barcode_id TEXT UNIQUE",
+      "ALTER TABLE users ADD COLUMN barcd_id TEXT UNIQUE",
       "ALTER TABLE users ADD COLUMN profile_complete BOOLEAN DEFAULT 0",
       "ALTER TABLE users ADD COLUMN profile_image TEXT"
     ];
