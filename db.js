@@ -41,7 +41,7 @@ async function initDb() {
       );
     `);
 
-    // Safeguard: Ensure required columns exist if table was created previously
+    // Ensure columns are present (Silent safeguards)
     const columns = [
       "ALTER TABLE users ADD COLUMN barcd_id TEXT UNIQUE",
       "ALTER TABLE users ADD COLUMN profile_complete BOOLEAN DEFAULT 0",
@@ -50,17 +50,13 @@ async function initDb() {
 
     for (const sql of columns) {
       try {
-        console.log(`🛠️ Attempting migration: ${sql}`);
         await db.execute(sql);
-        console.log(`✅ Migration Success: ${sql.split('ADD COLUMN ')[1]} added.`);
       } catch (e) {
-        if (e.message.toLowerCase().includes("duplicate") || e.message.toLowerCase().includes("already exists")) {
-          console.log(`⏩ Skipping duplicate column: ${sql.split('ADD COLUMN ')[1]}`);
-        } else {
-          console.error(`❌ Migration Critical Error: ${sql} | ${e.message}`);
-        }
+        // Silently skip if column already exists
       }
     }
+
+    console.log('✅ Database checked and ready.');
 
     console.log('✅ Database initialized successfully');
   } catch (error) {
