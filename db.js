@@ -40,6 +40,17 @@ async function initDb() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Safeguard: Ensure profile_complete column exists if table was created previously
+    try {
+      await db.execute("ALTER TABLE users ADD COLUMN profile_complete BOOLEAN DEFAULT 0");
+      console.log('✅ Added profile_complete column');
+    } catch (e) {
+      if (!e.message.includes("duplicate column name")) {
+        console.warn('⚠️ Column check warning:', e.message);
+      }
+    }
+
     console.log('✅ Database initialized successfully');
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
