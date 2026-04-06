@@ -58,6 +58,7 @@ async function completeProfile(userId, profileImage, idCardImage, confirmedBarco
     return {
         success: true,
         message: "Profile completed successfully.",
+        profile_complete: true,
         barcode: barcode,
         profileImageUrl: profileImageUrl
     };
@@ -93,7 +94,8 @@ async function bindBarcode(userId, barcode) {
 
     return {
         success: true,
-        message: "Barcode bound successfully. Profile complete."
+        message: "Barcode bound successfully. Profile complete.",
+        profile_complete: true
     };
 }
 
