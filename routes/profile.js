@@ -48,7 +48,8 @@ const authenticate = (req, res, next) => {
  */
 router.post('/complete', authenticate, upload.fields([
     { name: 'profileImage', maxCount: 1 },
-    { name: 'idCardImage', maxCount: 1 }
+    { name: 'idCardImage', maxCount: 1 },
+    { name: 'confirmedBarcode', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const profileImage = req.files['profileImage'] ? req.files['profileImage'][0] : null;
