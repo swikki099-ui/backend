@@ -6,8 +6,8 @@ const { readBarcode } = require('../utils/barcodeReader');
  * Complete the profile process.
  * 1. Upload profile image.
  * 2. Upload ID card image.
- * 3. Extract barcode from ID card.
- * 4. Update the user record.
+ * 3. Extract barcode from ID card or use confirmed barcode.
+ * 4. Update the user record in users table.
  */
 async function completeProfile(userId, profileImage, idCardImage, confirmedBarcode = null) {
     if (!profileImage || !idCardImage) {
@@ -19,7 +19,7 @@ async function completeProfile(userId, profileImage, idCardImage, confirmedBarco
     // 1. Upload Profile Image
     const profileImageUrl = await uploadFile(profileImage.buffer, profileImage.originalname, 'profiles');
     
-    // 2. Upload ID Card Image (Not saved to DB but kept in storage)
+    // 2. Upload ID Card Image (Stored for records)
     const idCardUrl = await uploadFile(idCardImage.buffer, idCardImage.originalname, 'id-cards');
 
     // 3. Extract Barcode (Skip if already confirmed by app)
@@ -34,9 +34,9 @@ async function completeProfile(userId, profileImage, idCardImage, confirmedBarco
         };
     }
 
-    // 4. Ensure barcode uniqueness
+    // 4. Ensure barcode uniqueness (Manual check instead of DB constraint for compatibility)
     const existing = await db.execute({
-        sql: 'SELECT id FROM users WHERE barcd_id = ? AND id != ?',
+        sql: 'SELECT id FROM users WHERE barcode_id = ? AND id != ?',
         args: [barcode, userId]
     });
 
@@ -44,11 +44,11 @@ async function completeProfile(userId, profileImage, idCardImage, confirmedBarco
         throw new Error('This barcode is already registered to another user.');
     }
 
-    // 5. Update user
+    // 5. Update user record directly
     await db.execute({
         sql: `UPDATE users SET 
             profile_image = ?, 
-            barcd_id = ?, 
+            barcode_id = ?, 
             profile_complete = 1, 
             updated_at = CURRENT_TIMESTAMP 
             WHERE id = ?`,
@@ -71,9 +71,9 @@ async function bindBarcode(userId, barcode) {
         throw new Error('Barcode is required.');
     }
 
-    // Check uniqueness
+    // Ensure barcode uniqueness
     const existing = await db.execute({
-        sql: 'SELECT id FROM users WHERE barcd_id = ? AND id != ?',
+        sql: 'SELECT id FROM users WHERE barcode_id = ? AND id != ?',
         args: [barcode, userId]
     });
 
@@ -81,10 +81,10 @@ async function bindBarcode(userId, barcode) {
         throw new Error('This barcode is already registered to another user.');
     }
 
-    // Update user
+    // Update user record
     await db.execute({
         sql: `UPDATE users SET 
-            barcd_id = ?, 
+            barcode_id = ?, 
             profile_complete = 1, 
             updated_at = CURRENT_TIMESTAMP 
             WHERE id = ?`,

@@ -103,4 +103,3 @@ async function getUserByCollegeId(collegeId) {
 }
 
 module.exports = { loginAndSync, getUserById, getUserByCollegeId };
-

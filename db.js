@@ -21,6 +21,7 @@ const db = createClient({
  */
 async function initDb() {
   try {
+    // 1. Core Users Table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,16 +35,16 @@ async function initDb() {
         email TEXT,
         phone TEXT,
         profile_image TEXT,
-        barcd_id TEXT UNIQUE,
+        barcode_id TEXT,
         profile_complete BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // Ensure columns are present (Silent safeguards)
+    // 2. Ensure columns are present (Simple safeguards for existing tables)
     const columns = [
-      "ALTER TABLE users ADD COLUMN barcd_id TEXT UNIQUE",
+      "ALTER TABLE users ADD COLUMN barcode_id TEXT",
       "ALTER TABLE users ADD COLUMN profile_complete BOOLEAN DEFAULT 0",
       "ALTER TABLE users ADD COLUMN profile_image TEXT"
     ];
@@ -52,11 +53,9 @@ async function initDb() {
       try {
         await db.execute(sql);
       } catch (e) {
-        // Silently skip if column already exists
+        // Silently skip if column already exists or table is locked
       }
     }
-
-    console.log('✅ Database checked and ready.');
 
     console.log('✅ Database initialized successfully');
   } catch (error) {
@@ -80,4 +79,3 @@ async function checkConnection() {
 initDb();
 
 module.exports = { db, checkConnection };
-
