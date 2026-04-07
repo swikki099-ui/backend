@@ -52,7 +52,9 @@ async function loginAndSync(email, password) {
             await db.execute({
                 sql: `UPDATE users SET 
                     name = ?, roll_no = ?, course = ?, branch = ?, semester = ?, 
-                    section = ?, email = ?, phone = ?, profile_image = ?, updated_at = CURRENT_TIMESTAMP
+                    section = ?, email = ?, phone = ?, 
+                    profile_image = COALESCE(NULLIF(?, ''), profile_image), 
+                    updated_at = CURRENT_TIMESTAMP
                     WHERE college_id = ?`,
                 args: [
                     userData.name, userData.roll_no, userData.course, userData.branch,
