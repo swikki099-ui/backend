@@ -38,9 +38,9 @@ async function scanQR(qrData) {
     // 2. Fetch user based on detected format
     try {
         const query = isDigitalQR 
-            ? `SELECT name, roll_no, course, branch, semester, phone, email, profile_image 
+            ? `SELECT name, roll_no, course, branch, semester, section, phone, email, profile_image 
                FROM users WHERE college_id = ?`
-            : `SELECT name, roll_no, course, branch, semester, phone, email, profile_image 
+            : `SELECT name, roll_no, course, branch, semester, section, phone, email, profile_image 
                FROM users WHERE barcode_id = ?`;
         
         const searchValue = isDigitalQR ? payload.id : qrData.trim();
