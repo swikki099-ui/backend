@@ -57,6 +57,12 @@ app.use('/admin', adminRoutes);
 
 // Root Endpoint for deployment verification
 app.get('/', (req, res) => {
+    // SMART REDIRECT: If Supabase redirects here with a code (due to whitelist mismatch), 
+    // forward it to the admin callback automatically.
+    if (req.query.code) {
+        return res.redirect(`/admin/auth/callback?code=${req.query.code}`);
+    }
+
     res.json({
         status: "success",
         message: "ITS College Backend API is successfully running on Vercel 🚀",
