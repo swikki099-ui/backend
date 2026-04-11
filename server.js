@@ -21,6 +21,9 @@ const PORT = process.env.PORT || 3000;
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// Trust Vercel's HTTPS proxy for correct req.protocol and cookies
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
