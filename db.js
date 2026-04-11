@@ -1,4 +1,5 @@
 const { createClient } = require('@libsql/client');
+const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
 
 const url = process.env.TURSO_DB_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
@@ -46,7 +47,8 @@ async function initDb() {
     const columns = [
       "ALTER TABLE users ADD COLUMN barcode_id TEXT",
       "ALTER TABLE users ADD COLUMN profile_complete BOOLEAN DEFAULT 0",
-      "ALTER TABLE users ADD COLUMN profile_image TEXT"
+      "ALTER TABLE users ADD COLUMN profile_image TEXT",
+      "ALTER TABLE users ADD COLUMN last_active_at DATETIME"
     ];
 
     for (const sql of columns) {
@@ -75,7 +77,12 @@ async function checkConnection() {
   }
 }
 
+// Supabase configuration for Admin Auth and Admin DB
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || 'placeholder';
+const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+
 // Automatically init DB on start
 initDb();
 
-module.exports = { db, checkConnection };
+module.exports = { db, checkConnection, supabase };

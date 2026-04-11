@@ -1,0 +1,76 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Mailing System</h1>
+                <p class="text-gray-500 text-sm mt-1">History of email broadcasts to students.</p>
+            </div>
+            <a href="/admin/mail/compose" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 text-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Broadcast
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</th>
+                            <th class="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Targeting</th>
+                            <th class="text-center px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Recipients</th>
+                            <th class="text-center px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="text-right px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Sent At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <% if (mailings.length === 0) { %>
+                            <tr><td colspan="5" class="py-20 text-center text-gray-400 italic">No emails sent yet.</td></tr>
+                        <% } %>
+                        <% mailings.forEach(function(m) { %>
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="font-semibold text-gray-900 block truncate max-w-xs"><%= m.subject %></span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-1">
+                                    <% if (!m.target_criteria.course && !m.target_criteria.branch && !m.target_criteria.semester) { %>
+                                        <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">All Students</span>
+                                    <% } else { %>
+                                        <% if (m.target_criteria.course) { %><span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium"><%= m.target_criteria.course %></span><% } %>
+                                        <% if (m.target_criteria.branch) { %><span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium"><%= m.target_criteria.branch %></span><% } %>
+                                        <% if (m.target_criteria.semester) { %><span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium">Sem <%= m.target_criteria.semester %></span><% } %>
+                                    <% } %>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center font-mono text-xs font-bold text-gray-600">
+                                <%= m.recipient_count %>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <% if (m.status === 'sent') { %>
+                                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                        COMPLETED
+                                    </span>
+                                <% } else { %>
+                                    <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-50 px-2.5 py-1 rounded-full border border-red-100" title="<%= m.error_message %>">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                        FAILED
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 text-right text-xs text-gray-400">
+                                <%= new Date(m.created_at).toLocaleString('en-IN') %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

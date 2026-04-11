@@ -1,0 +1,58 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                    <a href="/admin/mail" class="hover:text-blue-600">Mailing System</a>
+                    <span>/</span>
+                    <span class="text-gray-900 font-medium">Templates</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Email Templates</h1>
+                <p class="text-gray-500 text-sm mt-1">Manage reusable email content for broadcasts.</p>
+            </div>
+            <a href="/admin/mail/templates/new" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 text-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create Template
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <% if (templates.length === 0) { %>
+                <div class="col-span-full py-20 bg-white rounded-2xl border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mb-4 opacity-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <p class="font-medium text-lg">No templates saved yet</p>
+                    <p class="text-sm">Templates help you send recurring emails faster.</p>
+                </div>
+            <% } %>
+
+            <% templates.forEach(function(t) { %>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Template</span>
+                        <span class="text-[10px] text-gray-400 font-mono"><%= new Date(t.created_at).toLocaleDateString() %></span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2 truncate" title="<%= t.name %>"><%= t.name %></h3>
+                    <p class="text-xs text-gray-500 mb-4 line-clamp-2"><%= t.subject %></p>
+                </div>
+                
+                <div class="pt-4 border-t border-gray-50 flex items-center justify-between gap-3">
+                    <div class="flex gap-2">
+                        <a href="/admin/mail/templates/<%= t.id %>/edit" class="text-xs font-semibold text-gray-600 hover:text-blue-600 transition-colors">Edit</a>
+                        <form action="/admin/mail/templates/<%= t.id %>/delete" method="POST" onsubmit="return confirm('Permanently delete this template?')">
+                            <button type="submit" class="text-xs font-semibold text-red-400 hover:text-red-600 transition-colors">Delete</button>
+                        </form>
+                    </div>
+                    <a href="/admin/mail/compose?templateId=<%= t.id %>" class="bg-gray-900 hover:bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all">
+                        Use Now
+                    </a>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+    </main>
+</div>
+</body>
+</html>

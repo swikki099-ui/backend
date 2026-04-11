@@ -1,0 +1,96 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">System Health</h1>
+            <p class="text-gray-500 text-sm mt-1">Live status of all connected services</p>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-<%= health.turso === 'connected' ? 'green' : 'red' %>-100 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-<%= health.turso === 'connected' ? 'green' : 'red' %>-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3S3 13.66 3 12"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+                    </div>
+                    <span class="w-2.5 h-2.5 rounded-full bg-<%= health.turso === 'connected' ? 'green' : 'red' %>-500 animate-<%= health.turso === 'connected' ? 'pulse' : 'none' %>"></span>
+                </div>
+                <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Turso DB</div>
+                <div class="text-lg font-bold text-<%= health.turso === 'connected' ? 'green' : 'red' %>-600 capitalize"><%= health.turso %></div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-<%= health.supabase === 'connected' ? 'green' : 'red' %>-100 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-<%= health.supabase === 'connected' ? 'green' : 'red' %>-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <span class="w-2.5 h-2.5 rounded-full bg-<%= health.supabase === 'connected' ? 'green' : 'red' %>-500"></span>
+                </div>
+                <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Supabase</div>
+                <div class="text-lg font-bold text-<%= health.supabase === 'connected' ? 'green' : 'red' %>-600 capitalize"><%= health.supabase %></div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <% 
+                        let smtpColor = 'red';
+                        if (health.smtp === 'connected') smtpColor = 'green';
+                        if (health.smtp === 'unconfigured') smtpColor = 'amber';
+                    %>
+                    <div class="w-10 h-10 rounded-xl bg-<%= smtpColor %>-100 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-<%= smtpColor %>-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
+                    <span class="w-2.5 h-2.5 rounded-full bg-<%= smtpColor %>-500 animate-<%= health.smtp === 'connected' ? 'pulse' : 'none' %>"></span>
+                </div>
+                <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Gmail SMTP</div>
+                <div class="text-lg font-bold text-<%= smtpColor %>-600 capitalize"><%= health.smtp %></div>
+                <div class="text-[10px] text-gray-400 truncate mt-1"><%= health.smtpMessage %></div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                </div>
+                <div class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Server Uptime</div>
+                <div class="text-lg font-bold text-blue-600"><%= health.uptime %></div>
+            </div>
+        </div>
+
+        <!-- Environment Info -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-900 mb-5">Environment</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="flex justify-between items-center py-3 border-b border-gray-50">
+                    <span class="text-sm text-gray-500">Node.js Version</span>
+                    <span class="text-sm font-mono font-medium text-gray-800"><%= health.nodeVersion %></span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-50">
+                    <span class="text-sm text-gray-500">Environment</span>
+                    <span class="text-sm font-medium text-gray-800"><%= health.env %></span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-50">
+                    <span class="text-sm text-gray-500">Total Users</span>
+                    <span class="text-sm font-mono font-medium text-gray-800"><%= health.totalUsers %></span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-50">
+                    <span class="text-sm text-gray-500">Memory Usage</span>
+                    <span class="text-sm font-mono font-medium text-gray-800"><%= health.memoryUsage %></span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                    <span class="text-sm text-gray-500">Platform</span>
+                    <span class="text-sm font-mono font-medium text-gray-800"><%= health.platform %></span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                    <span class="text-sm text-gray-500">Checked At</span>
+                    <span class="text-sm font-mono font-medium text-gray-800"><%= health.checkedAt %></span>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

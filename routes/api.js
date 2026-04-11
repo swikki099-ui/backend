@@ -3,6 +3,9 @@ const { secureFetch } = require('../services/apiService');
 
 const router = express.Router();
 
+const { db } = require('../db');
+const sessionStore = require('../utils/sessionStore');
+
 // Helper to determine status code
 const handleError = (res, error) => {
     if (error.message.includes('Session expired') || error.message.includes('Invalid')) {
@@ -17,7 +20,19 @@ router.use((req, res, next) => {
     if (!sessionId) {
         return res.status(401).json({ error: 'Unauthorized: Missing x-session-id header.' });
     }
-    req.sessionId = sessionId; // Pass along the encrypted token string
+    req.sessionId = sessionId; 
+
+    // Fire-and-forget Daily Active User tracking
+    try {
+        const session = sessionStore.decrypt(sessionId);
+        if (session && session.user_id) {
+            db.execute({
+                sql: "UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?",
+                args: [session.user_id]
+            }).catch(e => console.error("DAU tracking error:", e.message));
+        }
+    } catch(err) { /* silent fail for invalid decrypts */ }
+    
     next();
 });
 

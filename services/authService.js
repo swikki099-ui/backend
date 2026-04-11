@@ -1,5 +1,6 @@
-const { db } = require('../db');
 const { loginUser, getUserProfile } = require('./apiService');
+const { sendWelcomeEmail } = require('../utils/mailer');
+const { logActivity } = require('../utils/activityLogger');
 
 /**
  * Perform login with College API and sync user profile data to Turso.
@@ -47,6 +48,16 @@ async function loginAndSync(email, password) {
                     userData.phone, userData.profile_image
                 ]
             });
+
+            // Log new registration activity
+            logActivity('sync', 'New Student Registered', `${userData.name} (${userData.roll_no}) joined the platform!`, {
+                icon: 'user-plus',
+                color: 'green',
+                metadata: { college_id: userData.college_id }
+            }).catch(() => { });
+
+            // Trigger Welcome Email (Async - don't block login)
+            sendWelcomeEmail(userData).catch(e => console.error('Welcome Mail Error:', e));
         } else {
             console.log(`🔄 UPDATING existing user: ${userData.name}`);
             await db.execute({
@@ -62,13 +73,20 @@ async function loginAndSync(email, password) {
                     userData.profile_image, userData.college_id
                 ]
             });
+
+            // Log update activity
+            logActivity('sync', 'Profile Updated', `${userData.name} synchronized their data.`, {
+                icon: 'refresh',
+                color: 'indigo',
+                metadata: { college_id: userData.college_id }
+            }).catch(() => { });
         }
-        
+
         const finalUser = await db.execute({
             sql: 'SELECT * FROM users WHERE college_id = ?',
             args: [userData.college_id]
         });
-        
+
         console.log(`✅ User sync completed successfully for ${userData.name}`);
 
         return {

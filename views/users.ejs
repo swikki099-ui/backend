@@ -1,0 +1,194 @@
+<%- include('partials/head') %>
+
+<div class="flex">
+    <%- include('partials/sidebar') %>
+
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">All Students</h1>
+                <p class="text-gray-500 text-sm mt-1"><%= totalUsers %> total students registered</p>
+            </div>
+            <a href="/admin/users/export-csv" class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+            </a>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
+            <form action="/admin/users" method="GET" class="flex gap-3 flex-wrap">
+                <div class="flex-1 min-w-[200px] relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" name="q" value="<%= search %>" placeholder="Search by name, email, roll no..." class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                </div>
+                <select name="status" class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 bg-white">
+                    <option value="" <%= status === '' ? 'selected' : '' %>>All Status</option>
+                    <option value="complete" <%= status === 'complete' ? 'selected' : '' %>>Profile Complete</option>
+                    <option value="incomplete" <%= status === 'incomplete' ? 'selected' : '' %>>Incomplete</option>
+                </select>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">Filter</button>
+                <% if (search || status) { %>
+                <a href="/admin/users" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl transition-colors">Clear</a>
+                <% } %>
+            </form>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Student</th>
+                            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Roll No</th>
+                            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Course / Branch</th>
+                            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sem</th>
+                            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Profile</th>
+                            <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                            <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        <% if (users.length === 0) { %>
+                        <tr>
+                            <td colspan="7" class="text-center py-16 text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                No students found
+                            </td>
+                        </tr>
+                        <% } %>
+                        <% users.forEach(function(u) { %>
+                        <tr class="hover:bg-gray-50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                        <%= u.name ? u.name.charAt(0).toUpperCase() : '?' %>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900"><%= u.name || '—' %></div>
+                                        <div class="text-xs text-gray-400"><%= u.email || u.college_id %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 font-mono text-xs text-gray-600"><%= u.roll_no || '—' %></td>
+                            <td class="px-6 py-4">
+                                <div class="text-gray-700"><%= u.course || '—' %></div>
+                                <div class="text-xs text-gray-400"><%= u.branch || '' %></div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600"><%= u.semester || '—' %></td>
+                            <td class="px-6 py-4">
+                                <% if (u.profile_complete) { %>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Complete
+                                </span>
+                                <% } else { %>
+                                <span class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                    Pending
+                                </span>
+                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-gray-400">
+                                <%= u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN') : '—' %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="/admin/users/<%= u.id %>" class="text-blue-600 hover:text-blue-800 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">View</a>
+                                    <a href="/admin/users/<%= u.id %>/edit" class="text-gray-600 hover:text-gray-800 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Edit</a>
+                                    <button onclick="confirmBan('<%= u.id %>', '<%= u.name %>')" class="text-amber-600 hover:text-amber-800 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors">Ban</button>
+                                    <button onclick="confirmDelete('<%= u.id %>', '<%= u.name %>')" class="text-red-500 hover:text-red-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                <span class="text-sm text-gray-500">Page <%= page %> of <%= totalPages %></span>
+                <div class="flex gap-2">
+                    <% if (page > 1) { %>
+                    <a href="/admin/users?page=<%= page - 1 %>&q=<%= search %>&status=<%= status %>" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">← Prev</a>
+                    <% } %>
+                    <% if (page < totalPages) { %>
+                    <a href="/admin/users?page=<%= page + 1 %>&q=<%= search %>&status=<%= status %>" class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">Next →</a>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </main>
+</div>
+
+<!-- Ban Modal -->
+<div id="banModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl animate-[fadeIn_0.2s_ease-out]">
+        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Ban User</h3>
+        <p class="text-gray-500 text-sm mb-5">You're about to ban <strong id="banUserName"></strong>. They won't be able to log in.</p>
+        <form id="banForm" action="" method="POST">
+            <input type="hidden" name="_action" value="ban">
+            <div class="mb-4">
+                <label class="text-sm font-medium text-gray-700 block mb-1.5">Ban Reason</label>
+                <textarea name="reason" rows="2" required placeholder="Explain why this user is being banned..." class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 resize-none"></textarea>
+            </div>
+            <div class="mb-5">
+                <label class="text-sm font-medium text-gray-700 block mb-1.5">Expires (leave blank = permanent)</label>
+                <input type="date" name="expires_at" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('banModal')" class="flex-1 border border-gray-200 text-gray-700 font-medium text-sm py-2.5 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors">Ban User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Delete User</h3>
+        <p class="text-gray-500 text-sm mb-5">Permanently delete <strong id="deleteUserName"></strong>? This cannot be undone.</p>
+        <form id="deleteForm" action="" method="POST">
+            <input type="hidden" name="_action" value="delete">
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('deleteModal')" class="flex-1 border border-gray-200 text-gray-700 font-medium text-sm py-2.5 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors">Delete Permanently</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function confirmBan(id, name) {
+        document.getElementById('banUserName').textContent = name;
+        document.getElementById('banForm').action = '/admin/users/' + id + '/action';
+        document.getElementById('banModal').classList.remove('hidden');
+    }
+    function confirmDelete(id, name) {
+        document.getElementById('deleteUserName').textContent = name;
+        document.getElementById('deleteForm').action = '/admin/users/' + id + '/action';
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+    // Close on backdrop click
+    document.querySelectorAll('[id$="Modal"]').forEach(m => {
+        m.addEventListener('click', function(e) { if (e.target === this) closeModal(this.id); });
+    });
+</script>
+
+</body>
+</html>

@@ -1,7 +1,8 @@
 const express = require('express');
-const { checkConnection } = require('../db');
+const { checkConnection, supabase } = require('../db');
 const { loginAndSync, getUserById } = require('../services/authService');
 const sessionStore = require('../utils/sessionStore');
+const { logActivity } = require('../utils/activityLogger');
 
 
 const router = express.Router();
@@ -22,7 +23,7 @@ router.get('/status', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
     }
@@ -30,18 +31,38 @@ router.post('/login', async (req, res) => {
     try {
         // Authenticate, Fetch Profile, and Upsert to Turso
         const { user, token } = await loginAndSync(email, password);
-        
+
+        // ✅ Check if user is banned in Supabase admin DB
+        const { data: ban } = await supabase
+            .from('user_bans')
+            .select('reason, expires_at')
+            .eq('college_id', user.college_id)
+            .eq('is_active', true)
+            .single();
+
+        if (ban) {
+            const expiry = ban.expires_at ? ` Until: ${new Date(ban.expires_at).toLocaleDateString('en-IN')}` : ' (Permanent)';
+            return res.status(403).json({ error: `Your account has been suspended.${expiry}`, reason: ban.reason });
+        }
+
         // Generate a secure encrypted token for the frontend client.
         // We include the user's ID from our database and their password for auto-refresh logic.
-        const sessionId = sessionStore.encrypt({ 
-            user_id: user.id, 
-            email, 
-            password, 
-            token 
+        const sessionId = sessionStore.encrypt({
+            user_id: user.id,
+            email,
+            password,
+            token
         });
 
-        res.json({ 
-            message: 'Login successful', 
+        // Log successful login activity
+        logActivity('login', 'Student Login', `${user.name} (${user.roll_no}) logged in.`, {
+            icon: 'user',
+            color: 'blue',
+            metadata: { user_id: user.id, email: user.email }
+        }).catch(() => { });
+
+        res.json({
+            message: 'Login successful',
             sessionId,
             user: {
                 id: user.id,
@@ -64,7 +85,7 @@ router.post('/login', async (req, res) => {
  */
 router.get('/me', async (req, res) => {
     let sessionId = req.headers['authorization'];
-    
+
     if (!sessionId) {
         return res.status(401).json({ error: 'No authorization session found' });
     }
@@ -81,6 +102,14 @@ router.get('/me', async (req, res) => {
     }
 
     console.log(`📡 Fetching personal profile for user_id: ${session.user_id}`);
+
+    // Lazy update DAU
+    try {
+        db.execute({
+            sql: "UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?",
+            args: [session.user_id]
+        }).catch(() => { });
+    } catch (err) { }
 
     try {
         const user = await getUserById(session.user_id);
@@ -107,7 +136,7 @@ router.get('/me', async (req, res) => {
         // A profile is complete only if profile_complete flag is set AND they have both a barcode and a profile image.
         const isActuallyComplete = !!user.profile_complete && !!user.barcode_id && !!user.profile_image;
 
-        res.json({ 
+        res.json({
             user: mappedUser,
             profile_complete: isActuallyComplete
         });

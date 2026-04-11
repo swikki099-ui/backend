@@ -1,31 +1,46 @@
 const express = require('express');
-const appConfig = require('../config/appConfig');
+const { supabase } = require('../db');
 
 const router = express.Router();
 
 // GET /app/version
-router.get('/version', (req, res) => {
-    // Specifically check for each required variable to aid troubleshooting
-    const missing = [];
-    if (!appConfig.version) missing.push('APP_VERSION');
-    if (!appConfig.force) missing.push('APP_FORCE');
-    if (!appConfig.message) missing.push('APP_MESSAGE');
-    if (!appConfig.downloadUrl) missing.push('APP_DOWNLOAD_URL');
+// Strictly reads from Supabase app_settings table (managed via Admin Panel).
+router.get('/version', async (req, res) => {
+    try {
+        // Source of Truth: Supabase DB (Managed by Admin Panel)
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('version, force, message, download_url')
+            .eq('is_current', true)
+            .maybeSingle();
 
-    if (missing.length > 0) {
-        return res.status(500).json({
-            error: 'Server Misconfiguration',
-            message: `App update environment variables are missing or incomplete: ${missing.join(', ')}`
+        if (error) throw error;
+
+        if (data) {
+            return res.json({
+                version:     data.version,
+                force:       data.force === true,
+                message:     data.message,
+                downloadUrl: data.download_url,
+            });
+        }
+        
+        // Catastrophic Fallback: Only if DB table is empty
+        return res.json({
+            version: '1.0.0',
+            force: false,
+            message: 'Software is up to date.',
+            downloadUrl: '#'
+        });
+
+    } catch (e) {
+        console.error('CRITICAL: Version check failed:', e.message);
+        // Return a safe response to prevent app crash
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'Unable to verify application version'
         });
     }
-
-    // Return the app version details
-    res.json({
-        version: appConfig.version,
-        force: appConfig.force === 'true',
-        message: appConfig.message,
-        downloadUrl: appConfig.downloadUrl
-    });
 });
 
 module.exports = router;

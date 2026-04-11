@@ -1,0 +1,56 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8">
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <a href="/admin/announcements" class="hover:text-blue-600">Announcements</a>
+                <span>/</span>
+                <span class="text-gray-900 font-medium"><%= announcement ? 'Edit' : 'New' %></span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900"><%= announcement ? 'Edit Announcement' : 'New Announcement' %></h1>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl">
+            <form action="<%= announcement ? '/admin/announcements/' + announcement.id + '/edit' : '/admin/announcements' %>" method="POST">
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Title</label>
+                        <input type="text" name="title" value="<%= announcement ? announcement.title : '' %>" required placeholder="Announcement title" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Body / Message</label>
+                        <textarea name="body" rows="5" required placeholder="Write the full announcement message..." class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 resize-y"><%= announcement ? announcement.body : '' %></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="text-sm font-semibold text-gray-700 block mb-1.5">Target Course <span class="text-gray-400 font-normal">(leave blank for all)</span></label>
+                            <input type="text" name="target_course" value="<%= announcement ? (announcement.target_course || '') : '' %>" placeholder="e.g. B.Tech" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-gray-700 block mb-1.5">Target Branch</label>
+                            <input type="text" name="target_branch" value="<%= announcement ? (announcement.target_branch || '') : '' %>" placeholder="e.g. Computer Science" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-gray-700 block mb-1.5">Target Semester</label>
+                            <input type="number" name="target_semester" value="<%= announcement ? (announcement.target_semester || '') : '' %>" min="1" max="8" placeholder="All semesters" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-gray-700 block mb-1.5">Publish At <span class="text-gray-400 font-normal">(optional scheduled)</span></label>
+                            <input type="datetime-local" name="publish_at" value="<%= announcement && announcement.publish_at ? announcement.publish_at.slice(0, 16) : '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-8 border-t border-gray-100 pt-6">
+                    <a href="/admin/announcements" class="flex-1 text-center border border-gray-200 text-gray-700 font-medium text-sm py-2.5 rounded-xl hover:bg-gray-50 transition-colors">Cancel</a>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors shadow-sm">
+                        <%= announcement ? 'Save Changes' : 'Publish Announcement' %>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8">
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <a href="/admin/users" class="hover:text-blue-600">Users</a>
+                <span>/</span>
+                <a href="/admin/users/<%= user.id %>" class="hover:text-blue-600"><%= user.name %></a>
+                <span>/</span>
+                <span class="text-gray-900 font-medium">Edit</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">Edit Student Profile</h1>
+        </div>
+
+        <% if (success) { %>
+        <div class="mb-5 flex items-center gap-2 bg-green-100 border border-green-300 text-green-700 text-sm px-4 py-3 rounded-xl">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Profile updated successfully!
+        </div>
+        <% } %>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl">
+            <form action="/admin/users/<%= user.id %>/edit" method="POST">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Full Name</label>
+                        <input type="text" name="name" value="<%= user.name || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Email</label>
+                        <input type="email" name="email" value="<%= user.email || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Roll Number</label>
+                        <input type="text" name="roll_no" value="<%= user.roll_no || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Phone</label>
+                        <input type="text" name="phone" value="<%= user.phone || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Course</label>
+                        <input type="text" name="course" value="<%= user.course || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Branch</label>
+                        <input type="text" name="branch" value="<%= user.branch || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Semester</label>
+                        <input type="number" name="semester" value="<%= user.semester || '' %>" min="1" max="8" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Section</label>
+                        <input type="text" name="section" value="<%= user.section || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Barcode ID</label>
+                        <input type="text" name="barcode_id" value="<%= user.barcode_id || '' %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <label class="text-sm font-semibold text-gray-700 block mb-1.5">Profile Image URL</label>
+                    <input type="url" name="profile_image" value="<%= user.profile_image || '' %>" placeholder="https://..." class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                </div>
+
+                <div class="mt-5 flex items-center gap-2">
+                    <input type="checkbox" name="profile_complete" id="profileComplete" value="1" <%= user.profile_complete ? 'checked' : '' %> class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="profileComplete" class="text-sm font-medium text-gray-700">Mark profile as complete</label>
+                </div>
+
+                <div class="flex gap-3 mt-8 border-t border-gray-100 pt-6">
+                    <a href="/admin/users/<%= user.id %>" class="flex-1 text-center border border-gray-200 text-gray-700 font-medium text-sm py-2.5 rounded-xl hover:bg-gray-50 transition-colors">Cancel</a>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>

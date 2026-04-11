@@ -1,0 +1,53 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8">
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <a href="/admin/mail" class="hover:text-blue-600">Mailing System</a>
+                <span>/</span>
+                <a href="/admin/mail/templates" class="hover:text-blue-600">Templates</a>
+                <span>/</span>
+                <span class="text-gray-900 font-medium"><%= template ? 'Edit' : 'New' %> Template</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900"><%= template ? 'Edit' : 'Create' %> Mail Template</h1>
+            <p class="text-gray-500 text-sm mt-1 leading-relaxed">
+                Save time by creating reusable subject lines and email bodies for your broadcasts.
+            </p>
+        </div>
+
+        <div class="max-w-4xl">
+            <form action="/admin/mail/templates<%= template ? '/' + template.id : '' %>" method="POST" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-8 space-y-6">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Template Name</label>
+                        <input type="text" name="name" required value="<%= template ? template.name : '' %>" placeholder="e.g., Exam Results Notification" 
+                               class="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                        <p class="text-[11px] text-gray-400 mt-2 italic">This is for your internal reference only.</p>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-50">
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Email Subject</label>
+                        <input type="text" name="subject" required value="<%= template ? template.subject : '' %>" placeholder="e.g., Important: Your Semester Results are Out" 
+                               class="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-1.5">Template Content (HTML Allowed)</label>
+                        <textarea name="body" required rows="14" placeholder="Dear Students,<br><br>We are pleased to inform you..." 
+                                  class="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"><%= template ? template.body : '' %></textarea>
+                    </div>
+                </div>
+
+                <div class="px-8 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                    <a href="/admin/mail/templates" class="text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">Cancel</a>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 text-sm">
+                        <%= template ? 'Update Template' : 'Save Template' %>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>

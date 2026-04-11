@@ -1,0 +1,225 @@
+<%- include('partials/head') %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="mb-8">
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <a href="/admin/mail" class="hover:text-blue-600">Mailing System</a>
+                <span>/</span>
+                <span class="text-gray-900 font-medium">New Broadcast</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">Broadcast Email</h1>
+            <p class="text-gray-500 text-sm mt-1">Send a custom HTML email to student groups.</p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <!-- Compose Form -->
+            <div class="xl:col-span-2">
+                <% if (templates && templates.length > 0) { %>
+                <div class="mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Quick Start</div>
+                            <div class="text-sm font-semibold text-gray-700">Apply a saved template?</div>
+                        </div>
+                    </div>
+                    <select id="templateSelector" class="text-sm border border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-gray-50/50 min-w-[200px]">
+                        <option value="">Select a template...</option>
+                        <% templates.forEach(t => { %>
+                            <option value="<%= t.id %>" data-subject="<%= t.subject %>" data-body="<%= t.body %>"><%= t.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <% } %>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                    <form action="/admin/mail/send" method="POST" enctype="multipart/form-data" id="mailForm">
+                        <div class="space-y-6">
+                            <!-- Content Type Toggle -->
+                            <div class="flex items-center gap-4 bg-gray-50/50 p-2 rounded-xl border border-gray-100 w-fit">
+                                <label class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg transition-all" id="label-html">
+                                    <input type="radio" name="content_type" value="html" checked class="hidden peer">
+                                    <span class="text-xs font-bold text-gray-400 peer-checked:text-blue-600">HTML Mode</span>
+                                </label>
+                                <div class="w-px h-4 bg-gray-200"></div>
+                                <label class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg transition-all" id="label-plain">
+                                    <input type="radio" name="content_type" value="plain" class="hidden peer">
+                                    <span class="text-xs font-bold text-gray-400 peer-checked:text-blue-600">Plain Text</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700 block mb-1.5">Email Subject</label>
+                                <input type="text" name="subject" required placeholder="Important Update: Campus Events" 
+                                       class="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700 block mb-1.5">Message Content</label>
+                                <textarea name="body" required rows="12" placeholder="Dear Students, {{name}}..." 
+                                          class="w-full text-sm border border-gray-200 rounded-xl px-4 py-3 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"></textarea>
+                            </div>
+
+                            <!-- File Attachments -->
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700 block mb-1.5">Attachments (Max 3, 5MB each)</label>
+                                <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 hover:border-blue-400 transition-all group relative">
+                                    <input type="file" name="attachments" multiple 
+                                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                    <div class="text-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-gray-300 group-hover:text-blue-500 mx-auto mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <p class="text-[11px] text-gray-500">Click to upload or drag files here</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100">
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Target Audience</h3>
+                                
+                                <div class="mb-6 bg-blue-50/50 rounded-xl p-4 border border-blue-100/50">
+                                    <label class="text-xs font-semibold text-blue-700 block mb-1.5">Specific Student (Optional)</label>
+                                    <div class="flex gap-2">
+                                        <div class="relative flex-1">
+                                            <input type="text" name="target_individual" placeholder="Enter Roll No or Email Address" 
+                                                   class="w-full text-sm border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                                            <div class="absolute right-3 top-2 text-[10px] text-gray-400 font-medium">Individual Mode</div>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-blue-600 mt-2">Note: If you provide a Roll No/Email, it will ignore the Branch/Semester/Section filters below.</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-500 block mb-1.5">Branch</label>
+                                        <select name="target_branch" class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+                                            <option value="">All Branches</option>
+                                            <% branches.forEach(b => { %>
+                                                <option value="<%= b %>"><%= b %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-500 block mb-1.5">Semester</label>
+                                        <select name="target_semester" class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+                                            <option value="">All Semesters</option>
+                                            <% semesters.forEach(s => { %>
+                                                <option value="<%= s %>">Semester <%= s %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-gray-500 block mb-1.5">Section</label>
+                                        <select name="target_section" class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+                                            <option value="">All Sections</option>
+                                            <% sections.forEach(sec => { %>
+                                                <option value="<%= sec %>">Section <%= sec %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex gap-3">
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 text-sm">
+                                Send Broadcast Mail
+                            </button>
+                            <a href="/admin/mail" class="px-6 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors text-sm">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Email Setup Guide -->
+            <div class="xl:col-span-1">
+                <!-- Placeholders Guide -->
+                <div class="mb-6 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <h2 class="text-gray-900 font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><path d="m18 8 4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        Personalization
+                    </h2>
+                    <p class="text-xs text-gray-500 mb-4">Use these tags to personalize your message for each student:</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <code class="text-[11px] font-bold text-indigo-600">{{name}}</code>
+                            <span class="text-[10px] text-gray-400">Student Name</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <code class="text-[11px] font-bold text-indigo-600">{{roll_no}}</code>
+                            <span class="text-[10px] text-gray-400">Roll Number</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <code class="text-[11px] font-bold text-indigo-600">{{branch}}</code>
+                            <span class="text-[10px] text-gray-400">Department</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <code class="text-[11px] font-bold text-indigo-600">{{semester}}</code>
+                            <span class="text-[10px] text-gray-400">Semester</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                        <p class="text-[10px] text-indigo-700 leading-relaxed italic">
+                            "Hello <b>{{name}}</b>, your exam schedule for Semester <b>{{semester}}</b> is ready."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                    <h2 class="text-blue-900 font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        Gmail SMTP Setup
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="bg-white/60 p-4 rounded-xl text-sm text-blue-800 leading-relaxed border border-blue-200/50">
+                            To send real emails, ensure your <code class="bg-blue-100 px-1 rounded">.env</code> has:
+                            <ul class="list-disc ml-5 mt-2 space-y-1">
+                                <li><strong>GMAIL_USER</strong>: Your address</li>
+                                <li><strong>GMAIL_PASS</strong>: 16-char App Password</li>
+                            </ul>
+                        </div>
+                        <p class="text-xs text-blue-600">
+                            <strong>Important:</strong> You must create an "App Password" in your Google Account security settings. A regular Gmail password will not work.
+                        </p>
+                        <a href="https://myaccount.google.com/apppasswords" target="_blank" class="block text-center bg-blue-600/10 hover:bg-blue-600/20 text-blue-700 text-xs font-bold py-2 rounded-lg transition-colors border border-blue-600/20">
+                            Generate App Password →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const selector = document.getElementById('templateSelector');
+    if (selector) {
+        selector.addEventListener('change', (e) => {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            if (selectedOption.value) {
+                const subject = selectedOption.getAttribute('data-subject');
+                const body = selectedOption.getAttribute('data-body');
+                
+                if (confirm('Apply this template? Current subject and body will be replaced.')) {
+                    document.querySelector('input[name="subject"]').value = subject;
+                    document.querySelector('textarea[name="body"]').value = body;
+                }
+            }
+        });
+    }
+
+    // Handle initial template from URL
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const templateId = urlParams.get('templateId');
+        if (templateId && selector) {
+            selector.value = templateId;
+            selector.dispatchEvent(new Event('change'));
+        }
+    });
+</script>
+</body>
+</html>

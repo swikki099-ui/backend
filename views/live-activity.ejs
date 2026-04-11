@@ -1,0 +1,148 @@
+<%- include('partials/head') %>
+
+<div class="flex">
+    <%- include('partials/sidebar') %>
+
+    <!-- Main Content -->
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        
+        <!-- Page Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    Live Activity
+                    <span class="flex h-3 w-3 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                </h1>
+                <p class="text-gray-500 text-sm mt-1">Real-time monitoring of system events and student activity.</p>
+            </div>
+            <div id="connection-status" class="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
+                <div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                Connecting...
+            </div>
+        </div>
+
+        <div class="max-w-4xl">
+            <!-- Filter Bar -->
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <button class="filter-btn active px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-100 shadow-sm text-gray-600 hover:bg-gray-50 transition-all">All Events</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-100 shadow-sm text-gray-600 hover:bg-gray-50 transition-all">Student Logins</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-100 shadow-sm text-gray-600 hover:bg-gray-50 transition-all">Admin Actions</button>
+                <button class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-gray-100 shadow-sm text-gray-600 hover:bg-gray-50 transition-all">Syncs</button>
+            </div>
+
+            <!-- Activity Container -->
+            <div id="activity-list" class="space-y-4">
+                <% history.forEach(item => { %>
+                    <div class="activity-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-start gap-4 transition-all hover:shadow-md animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-<%= item.color %>-100 text-<%= item.color %>-600 flex-shrink-0">
+                            <i class="lucide-<%= item.icon %> w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <h3 class="text-sm font-bold text-gray-900"><%= item.title %></h3>
+                                <span class="text-[10px] text-gray-400 font-medium"><%= new Date(item.created_at).toLocaleTimeString() %></span>
+                            </div>
+                            <p class="text-xs text-gray-500 leading-relaxed"><%= item.description %></p>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <div id="empty-state" class="hidden text-center py-20">
+                <div class="bg-gray-100 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3 class="text-gray-900 font-bold">Waiting for activity...</h3>
+                <p class="text-gray-500 text-sm mt-1">New events will appear here in real-time.</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Supabase Client Setup -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const supabaseUrl = '<%= supabaseConfig.url %>';
+    const supabaseAnonKey = '<%= supabaseConfig.anonKey %>';
+    
+    // Standardize client initialization
+    const supabaseClient = (typeof supabasejs !== 'undefined') ? supabasejs : supabase;
+    const client = supabaseClient.createClient(supabaseUrl, supabaseAnonKey);
+
+    const activityList = document.getElementById('activity-list');
+    const statusEl = document.getElementById('connection-status');
+
+    // Subscription
+    const channel = client
+        .channel('activity-stream')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_feed' }, (payload) => {
+            handleNewActivity(payload.new);
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                statusEl.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-green-500"></div> Connected';
+                statusEl.className = 'bg-green-50 text-green-600 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2';
+            }
+        });
+    
+    // Initial icon render
+    if (window.lucide) lucide.createIcons();
+
+    function handleNewActivity(item) {
+        const div = document.createElement('div');
+        div.className = `activity-card bg-white rounded-2xl p-5 border border-blue-100 shadow-md flex items-start gap-4 transition-all hover:shadow-lg animate-[slideIn_0.5s_ease-out]`;
+        
+        const timestamp = new Date(item.created_at).toLocaleTimeString();
+        
+        div.innerHTML = `
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-${item.color}-100 text-${item.color}-600 flex-shrink-0">
+                <i class="lucide-${item.icon} w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between mb-0.5">
+                    <h3 class="text-sm font-bold text-gray-800">${item.title}</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-blue-500 font-bold uppercase tracking-tighter animate-pulse">Just Now</span>
+                        <span class="text-[10px] text-gray-400 font-medium">${timestamp}</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">${item.description}</p>
+            </div>
+        `;
+
+        activityList.prepend(div);
+        
+        // Re-render icons for new element
+        if (window.lucide) lucide.createIcons();
+
+        // Remove highlight after a few seconds
+        setTimeout(() => {
+            div.classList.remove('border-blue-100', 'shadow-md');
+            div.classList.add('border-gray-100', 'shadow-sm');
+        }, 3000);
+
+        // Limit list size
+        if (activityList.children.length > 30) {
+            activityList.removeChild(activityList.lastChild);
+        }
+    }
+</script>
+
+<style>
+    @keyframes slideIn {
+        0% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .filter-btn.active {
+        background-color: #2563eb !important;
+        color: white !important;
+        border-color: #2563eb !important;
+    }
+</style>
+
+</body>
+</html>
