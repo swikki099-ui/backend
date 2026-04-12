@@ -143,6 +143,40 @@ router.post('/post', requireSocialAccess, upload.single('media'), async (req, re
 });
 
 /**
+ * POST /social/post/:id/repost
+ * Creates a new post record marking it as a repost.
+ */
+router.post('/post/:id/repost', requireSocialAccess, async (req, res) => {
+    try {
+        const originalPostId = req.params.id;
+        console.log(`[Social] Repost attempt for ID: ${originalPostId} by user: ${req.userId}`);
+        
+        // 1. Verify original exists
+        const original = await db.execute({ 
+            sql: `SELECT 1 FROM social_posts WHERE id = ?`, 
+            args: [originalPostId] 
+        });
+        
+        if (original.rows.length === 0) {
+            console.log(`[Social] 404: original post ${originalPostId} not found.`);
+            return res.status(404).json({ error: 'Original post not found.' });
+        }
+
+        // 2. Create the repost
+        const repostId = crypto.randomUUID();
+        await db.execute({
+            sql: `INSERT INTO social_posts (id, user_id, original_post_id, is_repost) VALUES (?, ?, ?, 1)`,
+            args: [repostId, req.userId, originalPostId]
+        });
+
+        res.json({ success: true, message: 'Post reposted.' });
+    } catch (e) {
+        console.error("Repost Error:", e);
+        res.status(500).json({ error: 'Failed to repost.' });
+    }
+});
+
+/**
  * POST /social/post/:id/like
  */
 router.post('/post/:id/like', requireSocialAccess, async (req, res) => {
@@ -250,33 +284,5 @@ router.delete('/post/:id', requireSocialAccess, async (req, res) => {
     }
 });
 
-/**
- * POST /social/post/:id/repost
- * Creates a new post record marking it as a repost.
- */
-router.post('/post/:id/repost', requireSocialAccess, async (req, res) => {
-    try {
-        const originalPostId = req.params.id;
-        
-        // 1. Verify original exists
-        const original = await db.execute({ 
-            sql: `SELECT 1 FROM social_posts WHERE id = ?`, 
-            args: [originalPostId] 
-        });
-        if (original.rows.length === 0) return res.status(404).json({ error: 'Original post not found.' });
-
-        // 2. Create the repost
-        const repostId = crypto.randomUUID();
-        await db.execute({
-            sql: `INSERT INTO social_posts (id, user_id, original_post_id, is_repost) VALUES (?, ?, ?, 1)`,
-            args: [repostId, req.userId, originalPostId]
-        });
-
-        res.json({ success: true, message: 'Post reposted.' });
-    } catch (e) {
-        console.error("Repost Error:", e);
-        res.status(500).json({ error: 'Failed to repost.' });
-    }
-});
 
 module.exports = router;
