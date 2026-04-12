@@ -29,6 +29,21 @@ router.post('/login', async (req, res) => {
     }
 
     try {
+        // ✅ 1. Check Global Feature Toggles (Maintenance & Login Locks)
+        const { data: settings } = await supabase
+            .from('feature_settings')
+            .select('login_enabled, maintenance_mode, maintenance_message')
+            .eq('id', 1)
+            .single();
+
+        if (settings) {
+            if (settings.maintenance_mode) {
+                return res.status(503).json({ error: settings.maintenance_message || 'System is currently under maintenance. Please try again later.' });
+            }
+            if (!settings.login_enabled) {
+                return res.status(403).json({ error: 'Logins are currently suspended by the administrator.' });
+            }
+        }
         // Authenticate, Fetch Profile, and Upsert to Turso
         const { user, token } = await loginAndSync(email, password);
 
@@ -114,7 +129,19 @@ router.get('/me', async (req, res) => {
     try {
         const user = await getUserById(session.user_id);
         if (!user) {
-            return res.status(404).json({ error: 'User not found in local database' });
+            return res.status(404).json({ error: 'User not found. Your account might have been deleted.' });
+        }
+
+        // ✅ Check Admin Bans (Force logout on mobile app if banned mid-session)
+        const { data: ban } = await supabase
+            .from('user_bans')
+            .select('reason, expires_at')
+            .eq('college_id', user.college_id)
+            .eq('is_active', true)
+            .single();
+
+        if (ban) {
+            return res.status(403).json({ error: 'Your account has been suspended.', reason: ban.reason });
         }
 
         // Map database fields to the format expected by the app (ProfileResponse)

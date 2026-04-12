@@ -66,6 +66,8 @@ app.use('/profile', profileRoutes);
 // Admin Dashboard UI (Server-Side Rendered)
 app.use('/admin', adminRoutes);
 
+// System Documentation Hub (Public)
+app.use('/docs', require('./routes/docs'));
 
 // Root Endpoint for deployment verification
 app.get('/', (req, res) => {

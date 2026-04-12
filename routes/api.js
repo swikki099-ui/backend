@@ -3,7 +3,7 @@ const { secureFetch } = require('../services/apiService');
 
 const router = express.Router();
 
-const { db } = require('../db');
+const { db, supabase } = require('../db');
 const sessionStore = require('../utils/sessionStore');
 
 // Helper to determine status code
@@ -15,23 +15,51 @@ const handleError = (res, error) => {
 };
 
 // Middleware: Extract and enforce valid session footprint for all /api endpoints
-router.use((req, res, next) => {
+router.use(async (req, res, next) => {
     const sessionId = req.headers['x-session-id'];
     if (!sessionId) {
         return res.status(401).json({ error: 'Unauthorized: Missing x-session-id header.' });
     }
     req.sessionId = sessionId; 
 
-    // Fire-and-forget Daily Active User tracking
     try {
         const session = sessionStore.decrypt(sessionId);
-        if (session && session.user_id) {
-            db.execute({
-                sql: "UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?",
-                args: [session.user_id]
-            }).catch(e => console.error("DAU tracking error:", e.message));
+        if (!session || !session.user_id) {
+            return res.status(401).json({ error: 'Invalid or malformed session footprint.' });
         }
-    } catch(err) { /* silent fail for invalid decrypts */ }
+
+        // 1. Check Turso DB & Update DAU
+        // Use RETURNING to capture their college_id efficiently in one swoop.
+        const userRes = await db.execute({
+            sql: "UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING college_id",
+            args: [session.user_id]
+        });
+
+        if (userRes.rows.length === 0) {
+            // User was deleted entirely via the Admin Panel User Management
+            return res.status(403).json({ error: 'Your account has been deleted by an administrator.' });
+        }
+
+        const collegeId = userRes.rows[0].college_id;
+
+        // 2. Parallel check: Admin bans & Global Maintenance Mode
+        const [settingsRes, banRes] = await Promise.all([
+            supabase.from('feature_settings').select('maintenance_mode, maintenance_message').eq('id', 1).single(),
+            supabase.from('user_bans').select('reason').eq('college_id', collegeId).eq('is_active', true).maybeSingle()
+        ]);
+
+        if (settingsRes.data && settingsRes.data.maintenance_mode) {
+            return res.status(503).json({ error: settingsRes.data.maintenance_message || 'System is currently under maintenance.' });
+        }
+
+        if (banRes.data) {
+            return res.status(403).json({ error: 'Your account is suspended.', reason: banRes.data.reason });
+        }
+
+    } catch(err) {
+        console.error('API Verification Error:', err.message);
+        return res.status(401).json({ error: 'Session verification failed.' });
+    }
     
     next();
 });

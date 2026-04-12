@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Backend | API Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+        .endpoint-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .endpoint-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+    
+    <!-- Top Nav -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">I</div>
+                <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">ITS Platform Docs</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/admin/login" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Admin Panel</a>
+                <a href="#architecture" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Architecture</a>
+                <a href="#endpoints" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">API Reference</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row gap-8">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 flex-shrink-0 relative">
+            <div class="sticky top-24">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Contents</h3>
+                <nav class="space-y-1">
+                    <a href="#architecture" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
+                        <i data-feather="server" class="w-4 h-4 mr-3 text-gray-400"></i> Architecture
+                    </a>
+                    <a href="#security" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
+                        <i data-feather="shield" class="w-4 h-4 mr-3 text-gray-400"></i> Security & Bans
+                    </a>
+                    <a href="#auth" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
+                        <i data-feather="key" class="w-4 h-4 mr-3 text-gray-400"></i> Authentication
+                    </a>
+                    <a href="#app" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
+                        <i data-feather="smartphone" class="w-4 h-4 mr-3 text-gray-400"></i> App Config
+                    </a>
+                    <a href="#proxy" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
+                        <i data-feather="activity" class="w-4 h-4 mr-3 text-gray-400"></i> College Proxies
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-4xl min-w-0">
+            
+            <!-- Hero Section -->
+            <div class="mb-16">
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">ITS Developer Hub</h1>
+                <p class="text-xl text-gray-500 max-w-3xl">Comprehensive documentation for the dual-database backend architecture, API endpoints, and the security enforced by the Admin Dashboard.</p>
+            </div>
+
+            <!-- Architecture -->
+            <section id="architecture" class="mb-16 scroll-mt-24">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <i data-feather="server" class="text-blue-500"></i> Local & Remote Architecture
+                </h2>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                    <p class="text-gray-600 mb-6 font-medium leading-relaxed">
+                        The ITS Backend utilizes a hyper-optimized **Dual-Database architecture** designed for high throughput mobile applications and administrative control.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-5 bg-gradient-to-br from-indigo-50 to-white rounded-xl border border-indigo-100">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center"><i data-feather="zap" class="w-4 h-4 text-indigo-600"></i></div>
+                                <h3 class="font-bold text-gray-900">Turso (Edge SQLite)</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">Stores local student records, caches profile configurations, handles stateless session tracking (`last_active_at`), and generates Digital Barcodes contextually.</p>
+                        </div>
+                        <div class="p-5 bg-gradient-to-br from-emerald-50 to-white rounded-xl border border-emerald-100">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center"><i data-feather="database" class="w-4 h-4 text-emerald-600"></i></div>
+                                <h3 class="font-bold text-gray-900">Supabase (PostgreSQL)</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed">Acts as the Central Command. Powers the Admin OAuth Auth, configures Feature Settings (`maintenance_mode`), Broadcast Announcements, and real-time User Bans.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security & Bans -->
+            <section id="security" class="mb-16 scroll-mt-24">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <i data-feather="shield" class="text-red-500"></i> Security & Guillotine Mode
+                </h2>
+                <div class="prose prose-blue max-w-none text-gray-600">
+                    <p>The backend enforces <strong>Guillotine Mode</strong>. This means no active mobile session is ever truly independent of the Admin Dashboard. Every single upstream proxy request passes through a synchronous parallel DB check.</p>
+                    
+                    <ul class="space-y-4 mt-6">
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"><i data-feather="user-x" class="w-3 h-3 text-red-600"></i></div>
+                            <div>
+                                <strong class="text-gray-900 block">Instant Ban Enforcement</strong>
+                                <span class="text-sm">If a user is banned in the Admin UI, their next `/api/*` request fails instantly with HTTP 403, locking them out of the ERP proxy. Next time they launch the app, `/auth/me` will clear their session.</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0"><i data-feather="alert-triangle" class="w-3 h-3 text-orange-600"></i></div>
+                            <div>
+                                <strong class="text-gray-900 block">Maintenance Halts</strong>
+                                <span class="text-sm">Activating Maintenance Mode in the dashboard drops all live `/api/*` proxies immediately with HTTP 503, returning your specified message.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Authentication Endpoints -->
+            <section id="auth" class="mb-16 scroll-mt-24">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <i data-feather="key" class="text-indigo-500"></i> Authentication
+                </h2>
+                <div class="space-y-6">
+                    <!-- Endpoint -->
+                    <div class="endpoint-card bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="flex items-center gap-4 bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">POST</span>
+                            <code class="text-sm font-semibold text-gray-900">/auth/login</code>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-gray-600 mb-4">Initializes a stateless encrypted JWT payload containing the user's ERP credentials. Syncs ERP data into Turso. Submits immediately to Admin feature checks.</p>
+                            <div class="bg-gray-900 rounded-lg p-4 font-mono text-xs text-gray-300 overflow-x-auto">
+                                <span class="text-gray-500">// Request Body</span><br>
+                                {<br>
+                                &nbsp;&nbsp;"email": "student@its.edu.in",<br>
+                                &nbsp;&nbsp;"password": "securedPassword123"<br>
+                                }<br><br>
+                                <span class="text-gray-500">// Returns: sessionId, user details</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Endpoint -->
+                    <div class="endpoint-card bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="flex items-center gap-4 bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">GET</span>
+                            <code class="text-sm font-semibold text-gray-900">/auth/me</code>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-gray-600">Cold-start validation. Requires <code>Authorization: Bearer &lt;sessionId&gt;</code>. Hydrates the mobile app state, verifying Turso DB inclusion and checking Supabase ban lists.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- App Config Endpoints -->
+            <section id="app" class="mb-16 scroll-mt-24">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <i data-feather="smartphone" class="text-purple-500"></i> App Configuration
+                </h2>
+                <div class="space-y-6">
+                    <div class="endpoint-card bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="flex items-center gap-4 bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">GET</span>
+                            <code class="text-sm font-semibold text-gray-900">/app/features</code>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-gray-600 mb-4">Public endpoint. Poll this on app mount to dictate UI capabilities directly from the Admin Dashboard.</p>
+                            <div class="bg-gray-900 rounded-lg p-4 font-mono text-xs text-gray-300">
+                                {<br>
+                                &nbsp;&nbsp;"qr_enabled": true,<br>
+                                &nbsp;&nbsp;"barcode_enabled": true,<br>
+                                &nbsp;&nbsp;"login_enabled": true,<br>
+                                &nbsp;&nbsp;"maintenance_mode": false<br>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="flex items-center gap-4 bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">GET</span>
+                            <code class="text-sm font-semibold text-gray-900">/app/announcements</code>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-gray-600">Retrieves published broadcast messages managed via the dashboard. Items with future `publish_at` dates are excluded locally.</p>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="flex items-center gap-4 bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">GET</span>
+                            <code class="text-sm font-semibold text-gray-900">/app/version</code>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-sm text-gray-600">Governs OTA App Updates. Instructs the mobile client whether the current session is outdated and if the update is <code>force=true</code>.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Proxy Endpoints -->
+            <section id="proxy" class="mb-16 scroll-mt-24">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <i data-feather="activity" class="text-emerald-500"></i> College API Proxies
+                </h2>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                    <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                        The `/api/*` domain acts as a direct passthrough to the upstream ITS ERP endpoints. <br/>
+                        <b>Required Header:</b> <code>x-session-id: &lt;your-token&gt;</code><br/>
+                        All requests execute synchronously through the Dual-Database Ban/Maintenance middleware filters prior to upstream transit.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 bg-blue-200 text-blue-800 text-[10px] font-bold rounded">GET</span>
+                                <code class="text-sm font-medium">/api/profile</code>
+                            </div>
+                            <p class="text-xs text-gray-500">Live fetch from ERP system bypassing local Turso cache.</p>
+                        </div>
+                        <div class="p-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 bg-blue-200 text-blue-800 text-[10px] font-bold rounded">GET</span>
+                                <code class="text-sm font-medium">/api/attendance/overall</code>
+                            </div>
+                            <p class="text-xs text-gray-500">Retrieves semester aggregate attendance tracking.</p>
+                        </div>
+                        <div class="p-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 bg-blue-200 text-blue-800 text-[10px] font-bold rounded">GET</span>
+                                <code class="text-sm font-medium">/api/timetable</code>
+                            </div>
+                            <p class="text-xs text-gray-500">Expects ?session=YYYY-YYYY & id=branchId params.</p>
+                        </div>
+                        <div class="p-4 border border-gray-100 rounded-xl bg-gray-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 bg-blue-200 text-blue-800 text-[10px] font-bold rounded">GET</span>
+                                <code class="text-sm font-medium">/api/calendar</code>
+                            </div>
+                            <p class="text-xs text-gray-500">Institution academic calendar and holiday list.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Init Icons -->
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

@@ -43,4 +43,49 @@ router.get('/version', async (req, res) => {
     }
 });
 
+// GET /app/features
+// Public endpoint for the mobile app to check UI toggles & maintenance status
+router.get('/features', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('feature_settings')
+            .select('*')
+            .eq('id', 1)
+            .single();
+
+        if (error) throw error;
+        
+        return res.json(data);
+    } catch (e) {
+        console.error('CRITICAL: Feature check failed:', e.message);
+        // Fallback to fully permissive state if DB is unreachable to prevent app lockouts
+        return res.json({
+            qr_enabled: true,
+            barcode_enabled: true,
+            login_enabled: true,
+            maintenance_mode: false,
+            maintenance_message: ""
+        });
+    }
+});
+
+// GET /app/announcements
+// Returns all currently published announcements, newest first
+router.get('/announcements', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('announcements')
+            .select('id, title, body, target_course, target_branch, target_semester, publish_at')
+            .lte('publish_at', new Date().toISOString())
+            .order('publish_at', { ascending: false });
+
+        if (error) throw error;
+        
+        return res.json(data || []);
+    } catch (e) {
+        console.error('Announcements fetch failed:', e.message);
+        return res.json([]);
+    }
+});
+
 module.exports = router;
