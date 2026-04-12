@@ -68,6 +68,30 @@ router.use(async (req, res, next) => {
 router.get('/profile', async (req, res) => {
     try {
         const data = await secureFetch('/profile', req.sessionId, res);
+        
+        // --- Merge Local Profile Data (Turso) ---
+        // The upstream API often lacks profile pictures. We inject our own Turso/Cloudinary images.
+        try {
+            const session = sessionStore.decrypt(req.sessionId);
+            if (session && session.user_id) {
+                const localUser = await db.execute({
+                    sql: "SELECT profile_image FROM users WHERE id = ?",
+                    args: [session.user_id]
+                });
+                
+                if (localUser.rows.length > 0 && localUser.rows[0].profile_image) {
+                    // Upstream response can be { data: { ... } } or { ... }
+                    if (data.data) {
+                        data.data.picture = localUser.rows[0].profile_image;
+                    } else {
+                        data.picture = localUser.rows[0].profile_image;
+                    }
+                }
+            }
+        } catch (dbErr) {
+            console.warn('⚠️ profile_image merge failed:', dbErr.message);
+        }
+
         res.json(data);
     } catch (error) { handleError(res, error); }
 });
