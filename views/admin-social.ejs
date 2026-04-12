@@ -1,23 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Moderation | ITS Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
-</head>
-<body class="bg-gray-100 min-h-screen font-sans">
-    
-    <%- include('partials/nav') %>
+<%- include('partials/head') %>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <% if (locals.flash) { %>
-            <div class="mb-6 p-4 rounded-md bg-green-50 border border-green-200 flex items-center">
-                <i data-feather="check-circle" class="text-green-500 mr-3"></i>
-                <span class="text-green-800 text-sm font-medium"><%= flash.message %></span>
-            </div>
-        <% } %>
+<div class="flex">
+    <%- include('partials/sidebar') %>
+
+    <!-- Main Content -->
+    <main class="ml-64 flex-1 p-8 min-h-screen bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <% if (locals.flash) { %>
+                <div class="mb-6 p-4 rounded-md bg-green-50 border border-green-200 flex items-center">
+                    <i data-feather="check-circle" class="text-green-500 mr-3"></i>
+                    <span class="text-green-800 text-sm font-medium"><%= flash.message %></span>
+                </div>
+            <% } %>
 
         <div class="mb-8 flex justify-between items-end">
             <div>
@@ -130,10 +124,9 @@
             </div>
 
         </div>
-    </div>
+        </div>
+        </div>
+    </main>
+</div>
 
-    <script>
-        feather.replace();
-    </script>
-</body>
-</html>
+<%- include('partials/footer') %>
