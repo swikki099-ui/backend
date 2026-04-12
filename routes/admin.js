@@ -791,6 +791,69 @@ router.get('/health', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+//  SOCIAL MODERATION
+// ─────────────────────────────────────────────
+
+router.get('/social', async (req, res) => {
+    try {
+        const [postsRes, reportsRes] = await Promise.all([
+            db.execute(`
+                SELECT p.*, u.name as author_name, 
+                (SELECT COUNT(*) FROM post_reports WHERE post_id = p.id AND status = 'pending') as report_count
+                FROM social_posts p 
+                JOIN users u ON p.user_id = u.id 
+                ORDER BY p.created_at DESC LIMIT 50
+            `),
+            db.execute(`
+                SELECT r.*, p.content, u.name as reporter_name
+                FROM post_reports r
+                JOIN social_posts p ON r.post_id = p.id
+                JOIN users u ON r.user_id = u.id
+                WHERE r.status = 'pending'
+                ORDER BY r.created_at DESC
+            `)
+        ]);
+
+        res.render('admin-social', {
+            posts: postsRes.rows || [],
+            reports: reportsRes.rows || [],
+            flash: req.query.success ? { type: 'success', message: 'Action completed successfully' } : null
+        });
+    } catch (err) {
+        res.status(500).send('Error loading social moderation: ' + err.message);
+    }
+});
+
+router.post('/social/post/:id/delete', async (req, res) => {
+    try {
+        const { deleteFromCloudinary } = require('../services/cloudinaryService');
+        const postRes = await db.execute({ sql: `SELECT media_url, media_type FROM social_posts WHERE id = ?`, args: [req.params.id]});
+        
+        if (postRes.rows.length > 0 && postRes.rows[0].media_url) {
+            const parts = postRes.rows[0].media_url.split('|');
+            if (parts.length > 1) {
+                await deleteFromCloudinary(parts[1], postRes.rows[0].media_type === 'document' ? 'raw' : 'image');
+            }
+        }
+
+        // Deleting from Turso cascades to likes, comments, and reports
+        await db.execute({ sql: `DELETE FROM social_posts WHERE id = ?`, args: [req.params.id]});
+        res.redirect('/admin/social?success=1');
+    } catch (err) {
+        res.status(500).send('Failed to nuke post: ' + err.message);
+    }
+});
+
+router.post('/social/report/:id/dismiss', async (req, res) => {
+    try {
+        await db.execute({ sql: `UPDATE post_reports SET status = 'dismissed' WHERE id = ?`, args: [req.params.id]});
+        res.redirect('/admin/social?success=1');
+    } catch (err) {
+        res.status(500).send('Failed to dismiss report: ' + err.message);
+    }
+});
+
+// ─────────────────────────────────────────────
 //  APP SETTINGS (FEATURE TOGGLES)
 // ─────────────────────────────────────────────
 

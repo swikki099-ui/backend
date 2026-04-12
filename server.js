@@ -63,6 +63,9 @@ app.use('/id', idRoutes);
 // Profile completion system
 app.use('/profile', profileRoutes);
 
+// Social Campus Feed
+app.use('/social', require('./routes/social'));
+
 // Admin Dashboard UI (Server-Side Rendered)
 app.use('/admin', adminRoutes);
 
