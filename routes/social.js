@@ -82,11 +82,13 @@ router.get('/feed', requireSocialAccess, async (req, res) => {
             SELECT 
                 p.id, p.content, p.media_url, p.media_type, p.created_at, p.is_repost,
                 u.name as author_name, u.semester as author_semester, u.section as author_section, u.profile_image as author_image,
+                u.verify_badge as author_verified,
                 (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes_count,
                 (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id) as comments_count,
                 EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND user_id = ?) as has_liked,
                 op.content as original_content,
-                ou.name as original_author_name
+                ou.name as original_author_name,
+                ou.verify_badge as original_author_verified
             FROM social_posts p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN social_posts op ON p.original_post_id = op.id
@@ -117,11 +119,13 @@ router.get('/user/posts', requireSocialAccess, async (req, res) => {
             SELECT 
                 p.id, p.content, p.media_url, p.media_type, p.created_at, p.is_repost,
                 u.name as author_name, u.semester as author_semester, u.section as author_section, u.profile_image as author_image,
+                u.verify_badge as author_verified,
                 (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes_count,
                 (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id) as comments_count,
                 EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND user_id = ?) as has_liked,
                 op.content as original_content,
-                ou.name as original_author_name
+                ou.name as original_author_name,
+                ou.verify_badge as original_author_verified
             FROM social_posts p
             JOIN users u ON p.user_id = u.id
             LEFT JOIN social_posts op ON p.original_post_id = op.id
