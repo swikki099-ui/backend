@@ -108,6 +108,91 @@ router.get('/feed', requireSocialAccess, async (req, res) => {
 });
 
 /**
+ * GET /social/user/posts
+ * Retrieves all posts authored by the current user.
+ */
+router.get('/user/posts', requireSocialAccess, async (req, res) => {
+    try {
+        const userPostsSql = `
+            SELECT 
+                p.id, p.content, p.media_url, p.media_type, p.created_at, p.is_repost,
+                u.name as author_name, u.semester as author_semester, u.section as author_section, u.profile_image as author_image,
+                (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes_count,
+                (SELECT COUNT(*) FROM post_comments WHERE post_id = p.id) as comments_count,
+                EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.id AND user_id = ?) as has_liked,
+                op.content as original_content,
+                ou.name as original_author_name
+            FROM social_posts p
+            JOIN users u ON p.user_id = u.id
+            LEFT JOIN social_posts op ON p.original_post_id = op.id
+            LEFT JOIN users ou ON op.user_id = ou.id
+            WHERE p.user_id = ?
+            ORDER BY p.created_at DESC
+        `;
+
+        const postsData = await db.execute({
+            sql: userPostsSql,
+            args: [req.userId, req.userId]
+        });
+
+        res.json(postsData.rows);
+    } catch (e) {
+        console.error("User Posts Error:", e);
+        res.status(500).json({ error: 'Failed to fetch your post history.' });
+    }
+});
+
+/**
+ * DELETE /social/post/:id
+ * Allows a user to delete their own post.
+ */
+router.delete('/post/:id', requireSocialAccess, async (req, res) => {
+    try {
+        const postId = req.params.id;
+
+        // 1. Verify ownership
+        const postRes = await db.execute({
+            sql: "SELECT id, media_url, user_id FROM social_posts WHERE id = ?",
+            args: [postId]
+        });
+
+        if (postRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Post not found.' });
+        }
+
+        const post = postRes.rows[0];
+        if (post.user_id !== req.userId) {
+            return res.status(403).json({ error: 'You can only delete your own posts.' });
+        }
+
+        // 2. Cleanup Cloudinary if media exists
+        if (post.media_url) {
+            // Check if it's the piped format: "url|public_id"
+            const parts = post.media_url.split('|');
+            const publicId = parts.length > 1 ? parts[1] : null;
+            
+            if (publicId) {
+                await deleteFromCloudinary(publicId).catch(err => console.error("Cloudinary Cleanup Failed:", err));
+            }
+        }
+
+        // 3. Delete from Turso (Likes and comments will be orphaned or CASCADE if set, 
+        // but we'll manually ensure clean up if we didn't use foreign key cascades).
+        // For simplicity, let's assume we want to clean them up.
+        await db.batch([
+            { sql: "DELETE FROM post_likes WHERE post_id = ?", args: [postId] },
+            { sql: "DELETE FROM post_comments WHERE post_id = ?", args: [postId] },
+            { sql: "DELETE FROM social_posts WHERE id = ?", args: [postId] }
+        ], "write");
+
+        res.json({ success: true, message: 'Post deleted successfully.' });
+    } catch (e) {
+        console.error("Delete Error:", e);
+        res.status(500).json({ error: 'Failed to delete post.' });
+    }
+});
+
+/**
  * POST /social/post
  * Create a new text post with optional media.
  */
