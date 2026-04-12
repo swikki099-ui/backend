@@ -38,6 +38,15 @@ router.use(async (req, res, next) => {
     } catch (e) {
         res.locals.bannedCount = 0;
     }
+
+    // Auto-fetch pending social reports
+    try {
+        const reportRes = await db.execute("SELECT COUNT(*) as count FROM post_reports WHERE status = 'pending'");
+        res.locals.pendingReportsCount = reportRes.rows[0].count;
+    } catch (e) {
+        res.locals.pendingReportsCount = 0;
+    }
+
     next();
 });
 
