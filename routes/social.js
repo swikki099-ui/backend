@@ -344,34 +344,4 @@ router.post('/post/:id/report', requireSocialAccess, async (req, res) => {
     }
 });
 
-/**
- * DELETE /social/post/:id
- * Only the author can delete it.
- */
-router.delete('/post/:id', requireSocialAccess, async (req, res) => {
-    try {
-        const post = await db.execute({ sql: `SELECT user_id, media_url, media_type FROM social_posts WHERE id = ?`, args: [req.params.id]});
-        if (post.rows.length === 0) return res.status(404).json({ error: 'Post not found.'});
-        
-        if (post.rows[0].user_id !== req.userId) {
-            return res.status(403).json({ error: 'You are not the author of this post.'});
-        }
-
-        // Delete from Cloudinary if media exists
-        if (post.rows[0].media_url) {
-            const parts = post.rows[0].media_url.split('|');
-            if (parts.length > 1) {
-                const publicId = parts[1];
-                await deleteFromCloudinary(publicId, post.rows[0].media_type === 'document' ? 'raw' : 'image');
-            }
-        }
-
-        await db.execute({ sql: `DELETE FROM social_posts WHERE id = ?`, args: [req.params.id]});
-        res.json({ success: true });
-    } catch(e) {
-        res.status(500).json({ error: 'Failed to delete.'});
-    }
-});
-
-
 module.exports = router;

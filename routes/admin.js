@@ -514,7 +514,7 @@ router.post('/announcements', async (req, res) => {
             target_course: target_course || null,
             target_branch: target_branch || null,
             target_semester: target_semester ? parseInt(target_semester) : null,
-            publish_at: publish_at || null,
+            publish_at: publish_at || new Date().toISOString(),
             created_by: req.adminUser?.id,
         });
 

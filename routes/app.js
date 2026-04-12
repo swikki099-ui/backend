@@ -73,11 +73,12 @@ router.get('/features', async (req, res) => {
 // Returns all currently published announcements, newest first
 router.get('/announcements', async (req, res) => {
     try {
+        const now = new Date().toISOString();
         const { data, error } = await supabase
             .from('announcements')
             .select('id, title, body, target_course, target_branch, target_semester, publish_at')
-            .lte('publish_at', new Date().toISOString())
-            .order('publish_at', { ascending: false });
+            .or(`publish_at.is.null,publish_at.lte.${now}`)
+            .order('publish_at', { ascending: false, nullsFirst: true });
 
         if (error) throw error;
         
