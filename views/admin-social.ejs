@@ -171,7 +171,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <form action="/admin/social/post" method="POST" enctype="multipart/form-data" onsubmit="submitForm(this,event)" class="p-6">
+      <form action="/admin/social/post" method="POST" enctype="multipart/form-data" id="createPostForm" onsubmit="submitPost(event)" class="p-6">
+        <input type="hidden" name="video_url" id="videoUrl">
+        <input type="hidden" name="video_file_id" id="videoFileId">
         <div class="flex gap-3">
           <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 overflow-hidden">
             <% if (adminItem && adminItem.profile_image) { %>
@@ -203,7 +205,7 @@
                   Image
                 </label>
                 <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-purple-50 text-purple-500 cursor-pointer transition-colors text-xs font-medium" title="Attach video">
-                  <input type="file" name="video" class="hidden" accept="video/*" onchange="previewAttachment(this, 'video')">
+                  <input type="file" name="video" class="hidden" accept="video/*" onchange="uploadVideoToByse(this)">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                   Video
                 </label>
@@ -267,6 +269,69 @@ function previewAttachment(input, type) {
 function clearPostAttachments() {
   document.querySelectorAll('#createPostModal input[type="file"]').forEach(f => f.value = '');
   document.getElementById('attachmentPreview').classList.add('hidden');
+  document.getElementById('videoUrl').value = '';
+  document.getElementById('videoFileId').value = '';
+}
+
+async function uploadVideoToByse(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  // Clear other file inputs
+  document.querySelectorAll('#createPostModal input[type="file"]').forEach(f => { if (f !== input) f.value = ''; });
+
+  // Show uploading state in preview
+  const preview = document.getElementById('attachmentPreview');
+  const thumb = document.getElementById('previewThumb');
+  const name = document.getElementById('previewName');
+  const size = document.getElementById('previewSize');
+  thumb.innerHTML = '<svg class="w-5 h-5 text-purple-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>';
+  name.textContent = file.name;
+  size.textContent = 'Uploading to Byse...';
+  preview.classList.remove('hidden');
+
+  try {
+    // Get Byse upload auth
+    const authRes = await fetch('/social/upload/video/auth', { headers: { 'Accept': 'application/json' } });
+    if (!authRes.ok) throw new Error('Failed to get upload auth');
+    const auth = await authRes.json();
+
+    // Upload directly to Byse
+    const fd = new FormData();
+    fd.append('key', auth.apiKey);
+    fd.append('file', file);
+
+    const upRes = await fetch(auth.uploadServer, { method: 'POST', body: fd });
+    const upJson = await upRes.json();
+
+    if (upJson.files?.[0]?.status !== 'OK' || !upJson.files[0].filecode)
+      throw new Error(JSON.stringify(upJson));
+
+    const filecode = upJson.files[0].filecode;
+    document.getElementById('videoUrl').value = 'https://bysedikamoum.com/e/' + filecode;
+    document.getElementById('videoFileId').value = filecode;
+
+    // Update preview to show success
+    thumb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+    size.textContent = 'Ready to post';
+    // Clear the file input so it's not sent to our server
+    input.value = '';
+  } catch (e) {
+    thumb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    size.textContent = 'Upload failed';
+    showToast(e.message || 'Video upload failed', 'error');
+    // Allow retry — keep the file input value so user can re-select
+  }
+}
+
+function submitPost(event) {
+  event.preventDefault();
+  const form = document.getElementById('createPostForm');
+  // If video was uploaded client-side, remove file from FormData (URLs are in hidden fields)
+  if (document.getElementById('videoUrl').value) {
+    form.querySelector('input[name="video"]').value = '';
+  }
+  submitForm(form, event);
 }
 
 // Close dropdowns on outside click

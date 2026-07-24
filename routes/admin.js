@@ -1088,12 +1088,16 @@ router.post('/social/post', (req, res, next) => {
             b2FileName = result.fileName;
         }
 
-        // Video upload (video field) → Byse.sx
+        // Video upload (video field → Byse.sx, or pre-uploaded URL from client-side direct upload)
         if (req.files?.video?.[0]) {
             const { uploadVideo } = require('../services/byseService');
             const result = await uploadVideo(req.files.video[0].buffer, req.files.video[0].originalname, req.files.video[0].mimetype);
             videoUrl = result.url;
             videoFileId = result.fileId;
+            mediaType = 'video';
+        } else if (req.body.video_url && req.body.video_file_id) {
+            videoUrl = req.body.video_url;
+            videoFileId = req.body.video_file_id;
             mediaType = 'video';
         }
 
