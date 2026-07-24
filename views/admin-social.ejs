@@ -39,7 +39,7 @@
           </div>
         </div>
         <div class="p-4">
-          <form id="profileForm" action="/admin/profile" method="POST" enctype="multipart/form-data">
+          <form id="profileForm" action="/admin/profile" method="POST" enctype="multipart/form-data" onsubmit="submitForm(this,event)">
             <div class="mb-4 flex justify-center">
               <label class="relative cursor-pointer group">
                 <div class="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group-hover:border-blue-400 transition-colors">
@@ -167,7 +167,7 @@
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <h2 class="text-lg font-bold text-gray-900">New Post</h2>
-        <button onclick="document.getElementById('createPostModal').classList.add('hidden')" class="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+        <button onclick="document.getElementById('createPostModal').classList.add('hidden'); clearPostAttachments();" class="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -182,15 +182,35 @@
           </div>
           <div class="flex-1">
             <textarea name="content" rows="3" maxlength="5000" placeholder="What's happening?" class="w-full text-lg border-0 focus:outline-none resize-none placeholder-gray-400 bg-transparent"></textarea>
+
+            <!-- Attachment preview area -->
+            <div id="attachmentPreview" class="hidden mt-3 bg-gray-50 rounded-xl p-3 border border-gray-200 flex items-center gap-3">
+              <div id="previewThumb" class="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center"></div>
+              <div class="flex-1 min-w-0">
+                <p id="previewName" class="text-sm font-medium text-gray-900 truncate"></p>
+                <p id="previewSize" class="text-xs text-gray-500"></p>
+              </div>
+              <button type="button" onclick="clearPostAttachments()" class="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
             <div class="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
-              <div class="flex gap-2">
-                <label class="p-2 rounded-full hover:bg-blue-50 text-blue-500 cursor-pointer transition-colors" title="Attach media">
-                  <input type="file" name="media" class="hidden" accept="image/*,.pdf,.docx">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div class="flex items-center gap-1">
+                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-blue-50 text-blue-500 cursor-pointer transition-colors text-xs font-medium" title="Attach image">
+                  <input type="file" name="media" class="hidden" accept="image/*" onchange="previewAttachment(this, 'image')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  Image
                 </label>
-                <label class="p-2 rounded-full hover:bg-purple-50 text-purple-500 cursor-pointer transition-colors" title="Attach video">
-                  <input type="file" name="video" class="hidden" accept="video/*">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-purple-50 text-purple-500 cursor-pointer transition-colors text-xs font-medium" title="Attach video">
+                  <input type="file" name="video" class="hidden" accept="video/*" onchange="previewAttachment(this, 'video')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                  Video
+                </label>
+                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-amber-50 text-amber-500 cursor-pointer transition-colors text-xs font-medium" title="Attach document">
+                  <input type="file" name="document" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" onchange="previewAttachment(this, 'document')">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Document
                 </label>
               </div>
               <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2 rounded-full transition-colors">Post</button>
@@ -214,6 +234,39 @@ function previewAvatar(input) {
     };
     reader.readAsDataURL(input.files[0]);
   }
+}
+
+function previewAttachment(input, type) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const preview = document.getElementById('attachmentPreview');
+  const thumb = document.getElementById('previewThumb');
+  const name = document.getElementById('previewName');
+  const size = document.getElementById('previewSize');
+
+  // Clear other file inputs to avoid conflicts
+  document.querySelectorAll('#createPostModal input[type="file"]').forEach(f => { if (f !== input) f.value = ''; });
+
+  name.textContent = file.name;
+  size.textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+
+  if (type === 'image') {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      thumb.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover">';
+    };
+    reader.readAsDataURL(file);
+  } else if (type === 'video') {
+    thumb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+  } else {
+    thumb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+  }
+  preview.classList.remove('hidden');
+}
+
+function clearPostAttachments() {
+  document.querySelectorAll('#createPostModal input[type="file"]').forEach(f => f.value = '');
+  document.getElementById('attachmentPreview').classList.add('hidden');
 }
 
 // Close dropdowns on outside click

@@ -39,8 +39,9 @@ function submitForm(form, event) {
     event.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
     if (btn) { btn.disabled = true; btn._orig = btn.textContent; btn.textContent = 'Saving...'; }
-    const fd = new FormData(form);
-    fetch(form.action, { method: form.method || 'POST', body: fd, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    const hasFiles = form.querySelector('input[type="file"]');
+    const body = hasFiles ? new FormData(form) : new URLSearchParams(new FormData(form));
+    fetch(form.action, { method: form.method || 'POST', body, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
     .then(async r => {
         const text = await r.text();
         if (!r.ok) throw new Error(text);

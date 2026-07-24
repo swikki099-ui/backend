@@ -1037,13 +1037,22 @@ router.post('/profile', socialUpload.single('profileImage'), async (req, res) =>
         }
 
         await logAudit(req.adminUser, 'update_admin_profile', 'system', 'SYSTEM_ADMIN', { name });
-        respondOrRedirect(req, res, '/admin/profile?success=1');
+        respondOrRedirect(req, res, '/admin/social');
     } catch (err) {
         respondOrRedirect(req, res, null, null, err);
     }
 });
 
-router.post('/social/post', socialUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
+router.post('/social/post', (req, res, next) => {
+    socialUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'video', maxCount: 1 }, { name: 'document', maxCount: 1 }])(req, res, (err) => {
+        if (err) {
+            if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE')
+                return respondOrRedirect(req, res, null, null, 'File too large. Max 10MB.');
+            return respondOrRedirect(req, res, null, null, err);
+        }
+        next();
+    });
+}, async (req, res) => {
     const { content } = req.body;
     try {
         const adminUserId = await ensureAdminUser();
@@ -1057,24 +1066,28 @@ router.post('/social/post', socialUpload.fields([{ name: 'media', maxCount: 1 },
         let videoUrl = null;
         let videoFileId = null;
 
+        // Image upload (media field)
         if (req.files?.media?.[0]) {
             const file = req.files.media[0];
-            if (file.mimetype.startsWith('image/')) {
-                const uploadResult = await uploadToCloudinary(file.buffer, file.mimetype);
-                mediaUrl = `${uploadResult.url}|${uploadResult.public_id}`;
-                mediaType = 'image';
-                publicId = uploadResult.public_id;
-            } else {
-                const { uploadFile: uploadToB2 } = require('../services/b2Service');
-                const result = await uploadToB2(file.buffer, file.originalname, file.mimetype);
-                const dlBase = `${req.protocol}://${req.get('host')}/social/download/document`;
-                mediaUrl = `${dlBase}/${result.fileName}|${result.fileId}|${file.originalname}`;
-                mediaType = 'document';
-                b2FileId = result.fileId;
-                b2FileName = result.fileName;
-            }
+            const uploadResult = await uploadToCloudinary(file.buffer, file.mimetype);
+            mediaUrl = `${uploadResult.url}|${uploadResult.public_id}`;
+            mediaType = 'image';
+            publicId = uploadResult.public_id;
         }
 
+        // Document upload (document field) → B2
+        if (req.files?.document?.[0]) {
+            const file = req.files.document[0];
+            const { uploadFile: uploadToB2 } = require('../services/b2Service');
+            const result = await uploadToB2(file.buffer, file.originalname, file.mimetype);
+            const dlBase = `${req.protocol}://${req.get('host')}/social/download/document`;
+            mediaUrl = `${dlBase}/${result.fileName}|${result.fileId}|${file.originalname}`;
+            mediaType = 'document';
+            b2FileId = result.fileId;
+            b2FileName = result.fileName;
+        }
+
+        // Video upload (video field) → Byse.sx
         if (req.files?.video?.[0]) {
             const { uploadVideo } = require('../services/byseService');
             const result = await uploadVideo(req.files.video[0].buffer, req.files.video[0].originalname, req.files.video[0].mimetype);
