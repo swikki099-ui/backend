@@ -337,6 +337,28 @@ router.get('/users', async (req, res) => {
     }
 });
 
+router.get('/users/export-csv', async (req, res) => {
+    try {
+        const { rows } = await db.execute('SELECT * FROM users ORDER BY created_at DESC');
+        if (rows.length === 0) return res.status(404).send('No users found to export.');
+
+        const headers = ['id', 'college_id', 'roll_no', 'name', 'email', 'course', 'branch', 'semester', 'section', 'phone', 'barcode_id', 'profile_complete', 'created_at'];
+        const csv = [headers.join(',')];
+        for (const u of rows) {
+            csv.push(headers.map(h => {
+                const val = u[h] != null ? String(u[h]).replace(/"/g, '""') : '';
+                return `"${val}"`;
+            }).join(','));
+        }
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="users-export.csv"');
+        res.send(csv.join('\n'));
+    } catch (err) {
+        res.status(500).send('Export failed: ' + err.message);
+    }
+});
+
 router.get('/users/:id', async (req, res) => {
     try {
         const userRes = await db.execute({
