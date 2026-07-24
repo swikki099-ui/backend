@@ -1267,14 +1267,24 @@ router.post('/media-settings/library', async (req, res) => {
 
 router.get('/library', async (req, res) => {
     try {
-        const docsRes = await db.execute({
-            sql: `SELECT ld.*, u.profile_image as uploader_image
-                  FROM library_documents ld
-                  LEFT JOIN users u ON ld.user_id = u.id
-                  ORDER BY ld.created_at DESC`
-        });
+        const search = (req.query.q || '').trim();
+        let sql = `SELECT ld.*, u.profile_image as uploader_image
+                   FROM library_documents ld
+                   LEFT JOIN users u ON ld.user_id = u.id`;
+        const args = [];
+        if (search) {
+            sql += ` WHERE ld.caption LIKE ? OR ld.mime_type LIKE ?`;
+            args.push(`%${search}%`, `%${search}%`);
+        }
+        sql += ` ORDER BY ld.created_at DESC`;
+
+        const docsRes = await db.execute({ sql, args });
+        let documents = docsRes.rows || [];
+
         res.render('admin-library', {
-            documents: docsRes.rows || [],
+            documents,
+            search,
+            viewMode: req.query.view || 'grid',
             flash: req.query.success ? { type: 'success', message: 'Document uploaded successfully' } :
                    req.query.deleted ? { type: 'success', message: 'Document deleted successfully' } :
                    req.query.error ? { type: 'error', message: req.query.error } : null
@@ -1311,6 +1321,22 @@ router.post('/library/upload', libraryUpload.single('document'), async (req, res
         res.redirect('/admin/library?success=1');
     } catch (err) {
         res.status(500).send('Upload failed: ' + err.message);
+    }
+});
+
+router.get('/library/download/:id', async (req, res) => {
+    try {
+        const docRes = await db.execute({
+            sql: 'SELECT b2_file_name, b2_file_id, caption FROM library_documents WHERE id = ?',
+            args: [req.params.id]
+        });
+        if (docRes.rows.length === 0) return res.status(404).send('Document not found');
+        const doc = docRes.rows[0];
+        const { getDownloadUrl } = require('../services/b2Service');
+        const url = await getDownloadUrl(doc.b2_file_name);
+        res.redirect(url);
+    } catch (err) {
+        res.status(500).send('Download failed: ' + err.message);
     }
 });
 

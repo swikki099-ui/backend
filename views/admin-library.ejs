@@ -2,83 +2,180 @@
 <div class="flex">
     <%- include('partials/sidebar') %>
     <main class="flex-1 ml-64 p-8 min-h-screen bg-gray-50">
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Library Management</h1>
-                <p class="text-gray-500 text-sm mt-1">Upload, browse, and delete study documents</p>
-            </div>
-        </div>
-
         <% if (locals.flash) { %>
         <div class="mb-6 px-4 py-3 rounded-xl text-sm font-medium <%= flash.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>"><%= flash.message %></div>
         <% } %>
 
-        <!-- Upload Form -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 max-w-2xl">
-            <h2 class="text-lg font-bold text-gray-900 mb-1">Upload Document</h2>
-            <p class="text-xs text-gray-400 mb-5">Upload study material, notes, or any document to the Library</p>
-            <form action="/admin/library/upload" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <!-- Header with search + upload -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
                 <div>
-                    <label class="text-sm font-medium text-gray-700 block mb-1.5">Caption *</label>
-                    <input type="text" name="caption" required
-                           class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                           placeholder="e.g. Maths Unit 1 Notes">
+                    <h1 class="text-2xl font-bold text-gray-900">Library Management</h1>
+                    <p class="text-gray-500 text-sm mt-1">Upload, browse, and delete study documents</p>
                 </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-700 block mb-1.5">File *</label>
-                    <input type="file" name="document" required
-                           class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Upload Document
+                </button>
+            </div>
+            <form method="GET" action="/admin/library" class="flex gap-3">
+                <div class="relative flex-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" name="q" value="<%= search %>" placeholder="Search by caption or file type..."
+                           class="w-full text-sm border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
                 </div>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Upload</button>
+                <input type="hidden" name="view" value="<%= viewMode %>">
+                <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl transition-colors">Search</button>
+                <% if (search) { %>
+                <a href="/admin/library" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl transition-colors flex items-center">Clear</a>
+                <% } %>
             </form>
+            <div class="flex items-center justify-between mt-4">
+                <p class="text-xs text-gray-400"><%= documents.length %> document<%= documents.length !== 1 ? 's' : '' %></p>
+                <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                    <a href="?view=grid<%= search ? '&q=' + encodeURIComponent(search) : '' %>" class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors <%= viewMode === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700' %>">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        Grid
+                    </a>
+                    <a href="?view=list<%= search ? '&q=' + encodeURIComponent(search) : '' %>" class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors <%= viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700' %>">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        List
+                    </a>
+                </div>
+            </div>
         </div>
 
-        <!-- Documents Table -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-lg font-bold text-gray-900">All Documents</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            <th class="px-6 py-3">Caption</th>
-                            <th class="px-6 py-3">Uploaded By</th>
-                            <th class="px-6 py-3">Type</th>
-                            <th class="px-6 py-3">Size</th>
-                            <th class="px-6 py-3">Date</th>
-                            <th class="px-6 py-3 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <% if (documents.length === 0) { %>
-                        <tr><td colspan="6" class="px-6 py-12 text-center text-gray-400">No documents uploaded yet.</td></tr>
-                        <% } %>
-                        <% for (const doc of documents) { %>
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-gray-900 max-w-xs truncate"><%= doc.caption %></td>
-                            <td class="px-6 py-4 text-gray-600"><%= doc.user_name || 'Unknown' %></td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg"><%= (doc.mime_type || 'application/octet-stream').split('/').pop().toUpperCase() %></span>
-                            </td>
-                            <td class="px-6 py-4 text-gray-500">
-                                <% if (doc.file_size > 0) { %>
-                                    <%= doc.file_size < 1024 ? doc.file_size + ' B' : doc.file_size < 1048576 ? (doc.file_size / 1024).toFixed(0) + ' KB' : (doc.file_size / 1048576).toFixed(1) + ' MB' %>
-                                <% } else { %>-<% } %>
-                            </td>
-                            <td class="px-6 py-4 text-gray-500"><%= new Date(doc.created_at + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
-                            <td class="px-6 py-4 text-right">
-                                <form action="/admin/library/<%= doc.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Delete this document?')">
-                                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium transition-colors">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
+        <!-- Documents Grid/List -->
+        <% if (documents.length === 0) { %>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p class="text-gray-500 font-medium">No documents found</p>
+            <p class="text-gray-400 text-sm mt-1"><%= search ? 'Try a different search term.' : 'Upload your first document to get started.' %></p>
         </div>
+        <% } else if (viewMode === 'grid') { %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <% for (const doc of documents) { %>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow overflow-hidden group">
+                <div class="h-36 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center relative">
+                    <% const ext = (doc.mime_type || '').split('/').pop().toLowerCase(); %>
+                    <% if (['png','jpg','jpeg','gif','webp'].includes(ext)) { %>
+                        <img src="/admin/library/download/<%= doc.id %>" class="h-full w-full object-cover">
+                    <% } else { %>
+                        <div class="text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-blue-400 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span class="text-xs font-bold text-blue-500 mt-1 block"><%= ext.toUpperCase() || 'FILE' %></span>
+                        </div>
+                    <% } %>
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <a href="/admin/library/download/<%= doc.id %>" target="_blank" class="w-8 h-8 bg-white/90 backdrop-blur rounded-lg flex items-center justify-center text-gray-600 hover:text-blue-600 shadow-sm" title="Download">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </a>
+                        <form action="/admin/library/<%= doc.id %>/delete" method="POST" onsubmit="return confirm('Delete this document?')">
+                            <button type="submit" class="w-8 h-8 bg-white/90 backdrop-blur rounded-lg flex items-center justify-center text-gray-600 hover:text-red-600 shadow-sm" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <p class="text-sm font-semibold text-gray-900 truncate" title="<%= doc.caption %>"><%= doc.caption %></p>
+                    <div class="flex items-center justify-between mt-2 text-xs text-gray-400">
+                        <span><%= doc.user_name || 'Unknown' %></span>
+                        <span>
+                            <% if (doc.file_size > 0) { %>
+                                <%= doc.file_size < 1024 ? doc.file_size + ' B' : doc.file_size < 1048576 ? (doc.file_size / 1024).toFixed(0) + ' KB' : (doc.file_size / 1048576).toFixed(1) + ' MB' %>
+                            <% } %>
+                        </span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1"><%= new Date(doc.created_at + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></p>
+                </div>
+            </div>
+            <% } %>
+        </div>
+        <% } else { %>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-3">Caption</th>
+                        <th class="px-6 py-3">Uploaded By</th>
+                        <th class="px-6 py-3">Type</th>
+                        <th class="px-6 py-3">Size</th>
+                        <th class="px-6 py-3">Date</th>
+                        <th class="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <% for (const doc of documents) { %>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900 max-w-xs truncate"><%= doc.caption %></td>
+                        <td class="px-6 py-4 text-gray-600"><%= doc.user_name || 'Unknown' %></td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg"><%= (doc.mime_type || 'application/octet-stream').split('/').pop().toUpperCase() %></span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">
+                            <% if (doc.file_size > 0) { %>
+                                <%= doc.file_size < 1024 ? doc.file_size + ' B' : doc.file_size < 1048576 ? (doc.file_size / 1024).toFixed(0) + ' KB' : (doc.file_size / 1048576).toFixed(1) + ' MB' %>
+                            <% } else { %>-<% } %>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500"><%= new Date(doc.created_at + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="/admin/library/download/<%= doc.id %>" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3 transition-colors">Download</a>
+                            <form action="/admin/library/<%= doc.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Delete this document?')">
+                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium transition-colors">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        <% } %>
     </main>
 </div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 w-full max-w-lg mx-4">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Upload Document</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Upload study material or notes to the Library</p>
+            </div>
+            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form action="/admin/library/upload" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-700 block mb-1.5">Caption *</label>
+                <input type="text" name="caption" required
+                       class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                       placeholder="e.g. Maths Unit 1 Notes">
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 block mb-1.5">File *</label>
+                <input type="file" name="document" required id="fileInput"
+                       class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <p id="fileName" class="text-xs text-gray-400 mt-1 hidden"></p>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Upload</button>
+                <button type="button" onclick="document.getElementById('uploadModal').classList.add('hidden')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('fileInput')?.addEventListener('change', function() {
+    const p = document.getElementById('fileName');
+    if (this.files?.[0]) {
+        p.textContent = this.files[0].name + ' (' + (this.files[0].size / 1024 / 1024).toFixed(1) + ' MB)';
+        p.classList.remove('hidden');
+    }
+});
+</script>
+
 </body>
 </html>
