@@ -1116,9 +1116,9 @@ router.post('/social/post', socialUpload.fields([{ name: 'media', maxCount: 1 },
 
 router.get('/social', async (req, res) => {
     try {
-        const [postsRes, reportsRes] = await Promise.all([
+        const [postsRes, reportsRes, adminRes] = await Promise.all([
             db.execute(`
-                SELECT p.*, u.name as author_name, u.semester, u.section, u.verify_badge,
+                SELECT p.*, u.name as author_name, u.semester, u.section, u.verify_badge, u.profile_image as author_avatar,
                 (SELECT COUNT(*) FROM post_reports WHERE post_id = p.id AND status = 'pending') as report_count
                 FROM social_posts p 
                 JOIN users u ON p.user_id = u.id 
@@ -1131,13 +1131,15 @@ router.get('/social', async (req, res) => {
                 JOIN users u ON r.user_id = u.id
                 WHERE r.status = 'pending'
                 ORDER BY r.created_at DESC
-            `)
+            `),
+            db.execute("SELECT * FROM users WHERE college_id = 'SYSTEM_ADMIN'")
         ]);
 
         res.render('admin-social', {
             posts: postsRes.rows || [],
             reports: reportsRes.rows || [],
-            flash: req.query.success ? { type: 'success', message: 'Action completed successfully' } : null
+            adminItem: adminRes.rows[0] || null,
+            flash: null
         });
     } catch (err) {
         res.status(500).send('Error loading social moderation: ' + err.message);

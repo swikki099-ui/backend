@@ -69,7 +69,7 @@
         </button>
         <div id="socialMediaMenu" class="space-y-1 <%= smActive ? '' : 'hidden' %>">
             <a href="/admin/social" class="nav-link flex items-center justify-between pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/social') && !currentPath.startsWith('/social/post') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-                Social Moderation
+                Post
                 <% if (typeof pendingReportsCount !== 'undefined' && pendingReportsCount > 0) { %>
                     <span class="flex h-2 w-2 relative">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -79,9 +79,6 @@
             </a>
             <a href="/admin/chat" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/chat') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
                 Chat Control
-            </a>
-            <a href="/admin/profile" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/profile') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-                Admin Profile
             </a>
             <a href="/admin/social/post" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath === '/social/post' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
                 Post to Social Hub
