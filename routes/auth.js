@@ -203,8 +203,8 @@ router.get('/linked-status', async (req, res) => {
 
 /**
  * POST /auth/link-account
- * Link a Google account to the current user.
- * Body: { idToken: string }  — Google ID token from Credential Manager
+ * Link a Supabase user ID to the current user's account.
+ * Body: { supabaseUserId: string }
  */
 router.post('/link-account', async (req, res) => {
     let sessionId = req.headers['authorization'];
@@ -213,31 +213,20 @@ router.post('/link-account', async (req, res) => {
     const session = sessionStore.decrypt(sessionId);
     if (!session || !session.user_id) return res.status(401).json({ error: 'Invalid or expired session' });
 
-    const { idToken } = req.body;
-    if (!idToken) return res.status(400).json({ error: 'idToken is required' });
+    const { supabaseUserId } = req.body;
+    if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId is required' });
 
-    // Verify the Google ID token with Supabase Auth
-    const { data, error } = await supabase.auth.signInWithIdToken({
-        provider: 'google',
-        token: idToken
-    });
-
-    if (error || !data?.user) {
-        return res.status(401).json({ error: 'Failed to verify Google identity: ' + (error?.message || 'Unknown error') });
-    }
-
-    const supabaseUserId = data.user.id;
-
-    // Check if already linked to another account
+    // Check if this Supabase user is already linked to another account
     const existing = await getUserBySupabaseId(supabaseUserId);
     if (existing && existing.id !== session.user_id) {
-        return res.status(409).json({ error: 'This Google account is already linked to another user.' });
+        return res.status(409).json({ error: 'This Google/GitHub account is already linked to another user.' });
     }
 
     await linkSupabaseAccount(session.user_id, supabaseUserId);
 
-    logActivity('link', 'Account Linked', `User #${session.user_id} linked to Supabase user ${supabaseUserId}.`, {
-        icon: 'link', color: 'purple',
+    logActivity('link', 'Account Linked', `User #${session.user_id} linked their account to Supabase user ${supabaseUserId}.`, {
+        icon: 'link',
+        color: 'purple',
         metadata: { user_id: session.user_id, supabaseUserId }
     }).catch(() => {});
 
@@ -246,32 +235,18 @@ router.post('/link-account', async (req, res) => {
 
 /**
  * POST /auth/login-with-oauth
- * Login using a linked Google account.
- * Body: { idToken: string }  — Google ID token from Credential Manager
+ * Login using a linked Supabase/OAuth account.
+ * Body: { supabaseUserId: string }
  */
 router.post('/login-with-oauth', async (req, res) => {
-    const { idToken } = req.body;
-    if (!idToken) return res.status(400).json({ error: 'idToken is required' });
-
-    // Verify the Google ID token with Supabase Auth
-    const { data, error } = await supabase.auth.signInWithIdToken({
-        provider: 'google',
-        token: idToken
-    });
-
-    if (error || !data?.user) {
-        return res.status(401).json({ error: 'Failed to verify Google identity.' });
-    }
-
-    const supabaseUserId = data.user.id;
+    const { supabaseUserId } = req.body;
+    if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId is required' });
 
     // Find the Turso user linked to this Supabase ID
     const user = await getUserBySupabaseId(supabaseUserId);
-    if (!user) {
-        return res.status(404).json({ error: 'No linked account found. Sign in with college credentials first and link your account.' });
-    }
+    if (!user) return res.status(404).json({ error: 'No linked account found. Please sign in with your college credentials first and link your account.' });
 
-    // Decrypt stored password and authenticate with ERP
+    // Decrypt the stored password and authenticate with ERP
     try {
         const password = decryptPassword(user.password_hash);
         const { token } = await loginUser(user.email || user.college_id, password);
@@ -283,9 +258,10 @@ router.post('/login-with-oauth', async (req, res) => {
             token
         });
 
-        logActivity('login', 'OAuth Login', `${user.name} (${user.roll_no}) logged in via Google.`, {
-            icon: 'user', color: 'purple',
-            metadata: { user_id: user.id, provider: 'google' }
+        logActivity('login', 'OAuth Login', `${user.name} (${user.roll_no}) logged in via OAuth.`, {
+            icon: 'user',
+            color: 'purple',
+            metadata: { user_id: user.id, provider: 'supabase' }
         }).catch(() => {});
 
         res.json({
@@ -303,6 +279,118 @@ router.post('/login-with-oauth', async (req, res) => {
     } catch (error) {
         console.error('❌ OAuth login error:', error);
         res.status(401).json({ error: 'Failed to authenticate with college system. Try logging in with email and password to refresh your credentials.' });
+    }
+});
+
+/**
+ * GET /auth/oauth/init
+ * Generate a Supabase OAuth URL.
+ * For linking: pass Authorization header (user is logged in).
+ * For login: no Authorization needed.
+ * Query: ?provider=google | github
+ * Returns: { url: string }
+ */
+router.get('/oauth/init', async (req, res) => {
+    const { provider } = req.query;
+    if (!provider || !['google', 'github'].includes(provider)) {
+        return res.status(400).json({ error: 'Provider must be "google" or "github"' });
+    }
+
+    // Check if this is for linking (authenticated) or login (unauthenticated)
+    let userId = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader) {
+        let sid = authHeader;
+        if (sid.toLowerCase().startsWith('bearer ')) sid = sid.slice(7);
+        const session = sessionStore.decrypt(sid);
+        if (session && session.user_id) userId = session.user_id;
+    }
+
+    try {
+        const redirectUrl = `${req.protocol}://${req.get('host')}/auth/oauth/callback`;
+        const params = {};
+        if (userId) params.user_id = userId.toString();
+
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider,
+            options: {
+                redirectTo: redirectUrl,
+                queryParams: params
+            }
+        });
+
+        if (error) throw error;
+        if (!data?.url) throw new Error('Failed to generate OAuth URL');
+
+        res.json({ url: data.url });
+    } catch (error) {
+        console.error('❌ OAuth init error:', error);
+        res.status(500).json({ error: 'Failed to initialize OAuth. Check Supabase configuration.' });
+    }
+});
+
+/**
+ * GET /auth/oauth/callback
+ * Handle OAuth callback from Supabase (user redirects here after Google/GitHub auth).
+ * For linking: links the Supabase user to the Turso user (user_id in query).
+ * For login: finds the linked Turso user, creates a session, redirects to deep link.
+ */
+router.get('/oauth/callback', async (req, res) => {
+    const { code, error: oauthError, user_id } = req.query;
+    const deepLinkBase = 'itsapp://oauth';
+
+    if (oauthError) {
+        return res.redirect(`${deepLinkBase}/error?message=${encodeURIComponent(oauthError)}`);
+    }
+
+    try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error || !data?.user) {
+            return res.redirect(`${deepLinkBase}/error?message=${encodeURIComponent(error?.message || 'Auth failed')}`);
+        }
+
+        const supabaseUserId = data.user.id;
+        const provider = data.user.app_metadata?.provider || 'unknown';
+
+        // --- LINKING (authenticated user linking their account) ---
+        if (user_id) {
+            const existing = await getUserBySupabaseId(supabaseUserId);
+            if (existing && existing.id !== parseInt(user_id)) {
+                return res.redirect(`${deepLinkBase}/error?message=${encodeURIComponent('This account is already linked to another user.')}`);
+            }
+            await linkSupabaseAccount(parseInt(user_id), supabaseUserId);
+            logActivity('link', 'Account Linked', `User #${user_id} linked via ${provider}.`, {
+                icon: 'link', color: 'purple',
+                metadata: { user_id: parseInt(user_id), provider, supabaseUserId }
+            }).catch(() => {});
+            return res.redirect(`${deepLinkBase}/success?type=link&provider=${provider}`);
+        }
+
+        // --- LOGIN (unauthenticated user signing in) ---
+        const user = await getUserBySupabaseId(supabaseUserId);
+        if (!user) {
+            return res.redirect(`${deepLinkBase}/error?message=${encodeURIComponent('No linked account found. Sign in with college credentials first and link your account.')}`);
+        }
+
+        const password = decryptPassword(user.password_hash);
+        const { token } = await loginUser(user.email || user.college_id, password);
+
+        const sessionId = sessionStore.encrypt({
+            user_id: user.id,
+            email: user.email,
+            password,
+            token
+        });
+
+        logActivity('login', 'OAuth Login', `${user.name} (${user.roll_no}) logged in via ${provider}.`, {
+            icon: 'user', color: 'purple',
+            metadata: { user_id: user.id, provider }
+        }).catch(() => {});
+
+        res.redirect(`${deepLinkBase}/success?type=login&sessionId=${encodeURIComponent(sessionId)}`);
+    } catch (error) {
+        console.error('❌ OAuth callback error:', error);
+        res.redirect(`${deepLinkBase}/error?message=${encodeURIComponent(error.message)}`);
     }
 });
 
