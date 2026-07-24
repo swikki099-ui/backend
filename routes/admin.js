@@ -223,22 +223,35 @@ router.get('/logout', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const [usersCountRes, profilesCompletedRes, recentUsersRes, activeTodayRes, bansRes] = await Promise.all([
+        const [
+            usersCountRes, profilesCompletedRes, recentUsersRes, activeTodayRes, bansRes,
+            facultyRes, eventsRes, postsRes
+        ] = await Promise.all([
             db.execute('SELECT COUNT(*) as count FROM users'),
             db.execute('SELECT COUNT(*) as count FROM users WHERE profile_complete = 1'),
-            db.execute('SELECT name, roll_no, email, course, created_at FROM users ORDER BY id DESC LIMIT 6'),
+            db.execute('SELECT name, roll_no, email, course, semester, section, created_at FROM users ORDER BY id DESC LIMIT 6'),
             db.execute("SELECT COUNT(*) as count FROM users WHERE last_active_at >= datetime('now', '-1 day')"),
             supabase.from('user_bans').select('id', { count: 'exact' }).eq('is_active', true),
+            db.execute('SELECT COUNT(*) as count FROM faculty'),
+            db.execute('SELECT COUNT(*) as count FROM calendar_events'),
+            db.execute('SELECT COUNT(*) as count FROM social_posts'),
         ]);
 
         const appSettings = await getAppSettings();
 
+        const totalUsers = usersCountRes.rows[0].count;
+        const profilesDone = profilesCompletedRes.rows[0].count;
+
         res.render('dashboard', {
             stats: {
-                totalUsers:       usersCountRes.rows[0].count,
-                profilesCompleted: profilesCompletedRes.rows[0].count,
+                totalUsers,
+                profilesCompleted: profilesDone,
+                profileRate: totalUsers > 0 ? Math.round((profilesDone / totalUsers) * 100) : 0,
                 dau:              activeTodayRes.rows[0].count,
                 activeBans:       bansRes.count || 0,
+                totalFaculty:     facultyRes.rows[0].count,
+                totalEvents:      eventsRes.rows[0].count,
+                totalPosts:       postsRes.rows[0].count,
             },
             recentUsers: recentUsersRes.rows,
             appVersion:  appSettings.version,
