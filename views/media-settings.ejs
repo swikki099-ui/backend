@@ -7,30 +7,26 @@
             <p class="text-gray-500 text-sm mt-1">Configure upload services for social feed posts</p>
         </div>
 
-        <% if (locals.flash) { %>
-        <div class="mb-5 px-4 py-3 rounded-xl text-sm font-medium <%= flash.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>"><%= flash.message %></div>
-        <% } %>
-
         <div class="space-y-6 max-w-2xl">
             <!-- Byse.sx -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <h2 class="text-lg font-bold text-gray-900 mb-1">Byse.sx — Video Uploads</h2>
                 <p class="text-xs text-gray-400 mb-5">Used for uploading videos to social feed posts</p>
-                <form method="POST" action="/admin/media-settings">
+                <form method="POST" action="/admin/media-settings" onsubmit="submitForm(this,event)">
                     <div class="mb-5">
                         <label class="text-sm font-medium text-gray-700 block mb-1.5">API Key</label>
                         <input type="password" name="byse_api_key" value="<%= byseApiKey %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
                         <p class="text-xs text-gray-400 mt-1.5">Get your API key from <a href="https://byse.sx" target="_blank" class="text-blue-500 hover:underline">byse.sx</a></p>
                     </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Save Settings</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Save Byse.sx Settings</button>
                 </form>
             </div>
 
             <!-- Library Settings -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <h2 class="text-lg font-bold text-gray-900 mb-1">Library Settings</h2>
+                <h2 class="text-lg font-bold text-gray-900 mb-1">Library Admin Settings</h2>
                 <p class="text-xs text-gray-400 mb-5">Configure who can delete documents from the App Library</p>
-                <form method="POST" action="/admin/media-settings/library">
+                <form method="POST" action="/admin/media-settings/library" onsubmit="submitForm(this,event)">
                     <div class="mb-5">
                         <label class="text-sm font-medium text-gray-700 block mb-1.5">Admin User IDs</label>
                         <input type="text" name="library_admins" value="<%= libraryAdmins %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30" placeholder="e.g. 1, 5, 12">
@@ -44,7 +40,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <h2 class="text-lg font-bold text-gray-900 mb-1">Backblaze B2 — Document Uploads</h2>
                 <p class="text-xs text-gray-400 mb-5">Used for uploading PDFs and documents to social feed posts</p>
-                <form method="POST" action="/admin/media-settings/b2">
+                <form method="POST" action="/admin/media-settings/b2" onsubmit="submitForm(this,event)">
                     <div class="mb-4">
                         <label class="text-sm font-medium text-gray-700 block mb-1.5">Application Key ID</label>
                         <input type="text" name="b2_application_key_id" value="<%= b2ApplicationKeyId %>" class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30">

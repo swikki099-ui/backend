@@ -11,10 +11,9 @@
             <h1 class="text-2xl font-bold text-gray-900">Import Faculty from JSON</h1>
         </div>
 
-        <% if (locals.flash) { %>
-        <div class="mb-5 flex items-center gap-2 <%= flash.type === 'success' ? 'bg-green-100 border-green-300 text-green-700' : 'bg-red-100 border-red-300 text-red-700' %> border text-sm px-4 py-3 rounded-xl">
+        <% if (false) { %>
+        <div class="mb-5 flex items-center gap-2 bg-green-100 border-green-300 text-green-700 border text-sm px-4 py-3 rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            <%= flash.message %>
         </div>
         <% } %>
 
@@ -43,7 +42,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     Upload JSON File
                 </h3>
-                <form method="POST" action="/admin/faculty/import" enctype="multipart/form-data">
+                <form method="POST" action="/admin/faculty/import" enctype="multipart/form-data" onsubmit="submitForm(this,event)">
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer" id="dropZone">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto text-gray-400 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/></svg>
                         <p class="text-sm text-gray-600 mb-1">Drop a <strong>.json</strong> file here or click to browse</p>
@@ -60,7 +59,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     Or Paste JSON Manually
                 </h3>
-                <form method="POST" action="/admin/faculty/import">
+                <form method="POST" action="/admin/faculty/import" onsubmit="submitForm(this,event)">
                     <textarea name="jsonData" rows="12" class="w-full text-sm font-mono border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400" placeholder='Paste JSON array here...'></textarea>
                     <button type="submit" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors shadow-sm">Import from Text</button>
                 </form>

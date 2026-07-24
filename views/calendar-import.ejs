@@ -11,9 +11,8 @@
             <h1 class="text-2xl font-bold text-gray-900">Import Calendar Events</h1>
         </div>
 
-        <% if (locals.flash) { %>
-        <div class="mb-5 flex items-center gap-2 <%= flash.type === 'success' ? 'bg-green-100 border-green-300 text-green-700' : 'bg-red-100 border-red-300 text-red-700' %> border text-sm px-4 py-3 rounded-xl">
-            <%= flash.message %>
+        <% if (false) { %>
+        <div class="mb-5 flex items-center gap-2 bg-green-100 border-green-300 text-green-700 border text-sm px-4 py-3 rounded-xl">
         </div>
         <% } %>
 
@@ -37,7 +36,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl">
-            <form method="POST" action="/admin/calendar/import">
+            <form method="POST" action="/admin/calendar/import" onsubmit="submitForm(this,event)">
                 <div>
                     <label class="text-sm font-semibold text-gray-700 block mb-1.5">JSON Data <span class="text-red-500">*</span></label>
                     <textarea name="jsonData" rows="15" class="w-full text-sm font-mono border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400" required></textarea>

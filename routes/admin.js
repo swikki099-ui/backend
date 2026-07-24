@@ -32,6 +32,18 @@ const libraryUpload = multer({
 
 const router = express.Router();
 
+// Dual AJAX / redirect response helper
+function respondOrRedirect(req, res, redirectUrl, data, err) {
+    if (err) {
+        if (req.xhr || req.get('Accept')?.includes('json'))
+            return res.status(500).json({ error: err.message || err });
+        return res.status(500).send(err.message || err);
+    }
+    if (req.xhr || req.get('Accept')?.includes('json'))
+        return res.json({ success: true, ...data });
+    res.redirect(redirectUrl);
+}
+
 // Apply admin protection to all routes in this file
 router.use(requireAdmin);
 
@@ -377,9 +389,9 @@ router.post('/users/:id/edit', async (req, res) => {
         });
 
             await logAudit(req.adminUser, 'edit_user', 'user', req.params.id, { name, roll_no });
-        res.redirect(`/admin/users/${req.params.id}?saved=1`);
+        respondOrRedirect(req, res, `/admin/users/${req.params.id}?saved=1`);
     } catch (err) {
-        res.status(500).send('Save failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -401,7 +413,7 @@ router.post('/users/:id/action', async (req, res) => {
                 .eq('is_active', true)
                 .maybeSingle();
             if (existingBan) {
-                return res.status(400).send('User is already banned.');
+                return respondOrRedirect(req, res, null, null, new Error('User is already banned.'));
             }
             const { error } = await supabase.from('user_bans').insert({
                 college_id: user.college_id,
@@ -413,7 +425,7 @@ router.post('/users/:id/action', async (req, res) => {
             });
             if (error) throw error;
             await logAudit(req.adminUser, 'ban_user', 'user', userId, { reason });
-            return res.redirect(`/admin/users/${userId}?banned=1`);
+            return respondOrRedirect(req, res, `/admin/users/${userId}?banned=1`);
         } else if (_action === 'unban') {
             const { error } = await supabase
                 .from('user_bans')
@@ -422,16 +434,16 @@ router.post('/users/:id/action', async (req, res) => {
                 .eq('is_active', true);
             if (error) throw error;
             await logAudit(req.adminUser, 'unban_user', 'user', userId);
-            return res.redirect(`/admin/users/${userId}?unbanned=1`);
+            return respondOrRedirect(req, res, `/admin/users/${userId}?unbanned=1`);
         } else if (_action === 'delete') {
             await db.execute({ sql: 'DELETE FROM users WHERE id = ?', args: [userId] });
             await logAudit(req.adminUser, 'delete_user', 'user', userId, { name: user.name });
-            return res.redirect('/admin/users');
+            return respondOrRedirect(req, res, '/admin/users');
         }
 
-        res.redirect(`/admin/users/${userId}`);
+        respondOrRedirect(req, res, `/admin/users/${userId}`);
     } catch (err) {
-        res.status(500).send('Action failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -477,9 +489,9 @@ router.post('/bans/:id/unban', async (req, res) => {
             }).catch(() => {});
         }
 
-        res.redirect('/admin/bans');
+        respondOrRedirect(req, res, '/admin/bans');
     } catch (err) {
-        res.status(500).send('Unban failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -532,10 +544,10 @@ router.post('/app-update', async (req, res) => {
             color: 'blue'
         }).catch(() => {});
 
-        res.redirect('/admin/app-update?success=1');
+        respondOrRedirect(req, res, '/admin/app-update?success=1');
     } catch (err) {
         console.error('Publish Update Error:', err);
-        res.status(500).send('Failed to publish update: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -575,9 +587,9 @@ router.post('/announcements', async (req, res) => {
 
         if (error) throw error;
         await logAudit(req.adminUser, 'create_announcement', 'announcement', title);
-        res.redirect('/admin/announcements');
+        respondOrRedirect(req, res, '/admin/announcements');
     } catch (err) {
-        res.status(500).send('Failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -585,9 +597,9 @@ router.post('/announcements/:id/delete', async (req, res) => {
     try {
         const { error } = await supabase.from('announcements').delete().eq('id', req.params.id);
         if (error) throw error;
-        res.redirect('/admin/announcements');
+        respondOrRedirect(req, res, '/admin/announcements');
     } catch (err) {
-        res.status(500).send('Delete failed');
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -621,9 +633,9 @@ router.post('/mail/templates', async (req, res) => {
         });
         if (error) throw error;
         await logAudit(req.adminUser, 'create_template', 'mail_template', name);
-        res.redirect('/admin/mail/templates');
+        respondOrRedirect(req, res, '/admin/mail/templates');
     } catch (err) {
-        res.status(500).send('Save failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -769,7 +781,7 @@ router.post('/mail/send', upload.array('attachments', 3), async (req, res) => {
         if (students.length === 0) {
             // Cleanup files if no recipients
             files.forEach(f => fs.unlinkSync(f.path));
-            return res.status(400).send('No student found matching criteria');
+            return respondOrRedirect(req, res, null, null, new Error('No student found matching criteria'));
         }
 
         // Send personalized emails in a loop
@@ -814,9 +826,9 @@ router.post('/mail/send', upload.array('attachments', 3), async (req, res) => {
             format: isHtml ? 'html' : 'plain',
             files: files.length
         });
-        res.redirect('/admin/mail?success=1');
+        respondOrRedirect(req, res, '/admin/mail?success=1');
     } catch (err) {
-        res.status(500).send('Mail failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1003,9 +1015,9 @@ router.post('/profile', socialUpload.single('profileImage'), async (req, res) =>
         }
 
         await logAudit(req.adminUser, 'update_admin_profile', 'system', 'SYSTEM_ADMIN', { name });
-        res.redirect('/admin/profile?success=1');
+        respondOrRedirect(req, res, '/admin/profile?success=1');
     } catch (err) {
-        res.status(500).send('Update failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1069,10 +1081,10 @@ router.post('/social/post', socialUpload.fields([{ name: 'media', maxCount: 1 },
             color: 'purple'
         }).catch(() => {});
 
-        res.redirect('/admin/social/post?success=1');
+        respondOrRedirect(req, res, '/admin/social/post?success=1');
     } catch (err) {
         console.error('Admin Post Error:', err);
-        res.status(500).send('Failed to create post: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1133,18 +1145,18 @@ router.post('/social/post/:id/delete', async (req, res) => {
         }
 
         await db.execute({ sql: `DELETE FROM social_posts WHERE id = ?`, args: [req.params.id]});
-        res.redirect('/admin/social?success=1');
+        respondOrRedirect(req, res, '/admin/social?success=1');
     } catch (err) {
-        res.status(500).send('Failed to nuke post: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
 router.post('/social/report/:id/dismiss', async (req, res) => {
     try {
         await db.execute({ sql: `UPDATE post_reports SET status = 'dismissed' WHERE id = ?`, args: [req.params.id]});
-        res.redirect('/admin/social?success=1');
+        respondOrRedirect(req, res, '/admin/social?success=1');
     } catch (err) {
-        res.status(500).send('Failed to dismiss report: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1195,10 +1207,10 @@ router.post('/app-settings', async (req, res) => {
 
         await logAudit(req.adminUser, 'update_app_settings', 'system', '1', updateData);
 
-        res.redirect('/admin/app-settings?success=1');
+        respondOrRedirect(req, res, '/admin/app-settings?success=1');
     } catch (err) {
         console.error('Settings Update Error:', err);
-        res.status(500).send('Error updating settings: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1241,9 +1253,9 @@ router.post('/media-settings', async (req, res) => {
         }
 
         await logAudit(req.adminUser, 'update_media_settings', 'system', 'byse');
-        res.redirect('/admin/media-settings?saved=1');
+        respondOrRedirect(req, res, '/admin/media-settings?saved=1');
     } catch (err) {
-        res.status(500).send('Error: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1255,9 +1267,9 @@ router.post('/media-settings/library', async (req, res) => {
             args: ['library_admins', library_admins || '']
         });
         await logAudit(req.adminUser, 'update_library_settings', 'system', 'library');
-        res.redirect('/admin/media-settings?saved=1');
+        respondOrRedirect(req, res, '/admin/media-settings?saved=1');
     } catch (err) {
-        res.status(500).send('Error: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1298,10 +1310,10 @@ router.post('/library/upload', libraryUpload.single('document'), async (req, res
     try {
         const { caption } = req.body;
         if (!caption || !caption.trim()) {
-            return res.redirect('/admin/library?error=' + encodeURIComponent('Caption is required'));
+            return respondOrRedirect(req, res, '/admin/library?error=' + encodeURIComponent('Caption is required'), null, new Error('Caption is required'));
         }
         if (!req.file) {
-            return res.redirect('/admin/library?error=' + encodeURIComponent('File is required'));
+            return respondOrRedirect(req, res, '/admin/library?error=' + encodeURIComponent('File is required'), null, new Error('File is required'));
         }
 
         const { uploadFile: uploadToB2 } = require('../services/b2Service');
@@ -1318,17 +1330,9 @@ router.post('/library/upload', libraryUpload.single('document'), async (req, res
         });
 
         await logAudit(req.adminUser, 'upload_library_doc', 'library', result.fileName, { caption });
-        if (req.xhr || req.headers.accept?.includes('json')) {
-            res.json({ success: true });
-        } else {
-            res.redirect('/admin/library?success=1');
-        }
+        respondOrRedirect(req, res, '/admin/library?success=1');
     } catch (err) {
-        if (req.xhr || req.headers.accept?.includes('json')) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.status(500).send('Upload failed: ' + err.message);
-        }
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1363,17 +1367,9 @@ router.post('/library/:id/delete', async (req, res) => {
         }
         await db.execute({ sql: 'DELETE FROM library_documents WHERE id = ?', args: [req.params.id] });
         await logAudit(req.adminUser, 'delete_library_doc', 'library', req.params.id);
-        if (req.xhr || req.headers.accept?.includes('json')) {
-            res.json({ success: true });
-        } else {
-            res.redirect('/admin/library?deleted=1');
-        }
+        respondOrRedirect(req, res, '/admin/library?deleted=1');
     } catch (err) {
-        if (req.xhr || req.headers.accept?.includes('json')) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.status(500).send('Delete failed: ' + err.message);
-        }
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1395,9 +1391,9 @@ router.post('/media-settings/b2', async (req, res) => {
             }
         }
         await logAudit(req.adminUser, 'update_media_settings', 'system', 'b2');
-        res.redirect('/admin/media-settings?saved=1');
+        respondOrRedirect(req, res, '/admin/media-settings?saved=1');
     } catch (err) {
-        res.status(500).send('Error: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1480,9 +1476,9 @@ router.post('/faculty', async (req, res) => {
             args: [employee_id, name, designation, department, email, phone, qualification, specialization, profile_image || null, is_active === 'on' ? 1 : 0]
         });
         await logAudit(req.adminUser, 'create_faculty', 'faculty', employee_id, { name, department });
-        res.redirect('/admin/faculty?success=1');
+        respondOrRedirect(req, res, '/admin/faculty?success=1');
     } catch (err) {
-        res.status(500).send('Create failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1569,7 +1565,11 @@ router.post('/faculty/import', importUpload.single('jsonFile'), async (req, res)
         const flash = { type: 'success', message: `Import complete: ${created} created, ${updated} updated (${totalInFile} records in file)` };
         if (errors.length) flash.message += `, ${errors.length} errors`;
 
-        res.render('faculty-import', { flash });
+        if (req.xhr || req.get('Accept')?.includes('json')) {
+            res.json({ success: true, message: flash.message });
+        } else {
+            res.render('faculty-import', { flash });
+        }
     } catch (err) {
         res.status(500).send('Import failed: ' + err.message);
     }
@@ -1589,9 +1589,9 @@ router.post('/faculty/:id', async (req, res) => {
             args: [employee_id, name, designation, department, email, phone, qualification, specialization, profile_image || null, is_active === 'on' ? 1 : 0, req.params.id]
         });
         await logAudit(req.adminUser, 'update_faculty', 'faculty', req.params.id, { name, department });
-        res.redirect(`/admin/faculty/${req.params.id}/edit?saved=1`);
+        respondOrRedirect(req, res, `/admin/faculty/${req.params.id}/edit?saved=1`);
     } catch (err) {
-        res.status(500).send('Update failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1599,9 +1599,9 @@ router.post('/faculty/:id/delete', async (req, res) => {
     try {
         await db.execute({ sql: 'DELETE FROM faculty WHERE id = ?', args: [req.params.id] });
         await logAudit(req.adminUser, 'delete_faculty', 'faculty', req.params.id);
-        res.redirect('/admin/faculty?deleted=1');
+        respondOrRedirect(req, res, '/admin/faculty?deleted=1');
     } catch (err) {
-        res.status(500).send('Delete failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1690,9 +1690,9 @@ router.post('/calendar/source', async (req, res) => {
             args: [source, source]
         });
         await logAudit(req.adminUser, 'update_calendar_source', 'system', '1', { source });
-        res.redirect('/admin/calendar');
+        respondOrRedirect(req, res, '/admin/calendar');
     } catch (err) {
-        res.status(500).send('Failed to update calendar source: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1745,7 +1745,11 @@ router.post('/calendar/import', async (req, res) => {
         const flash = { type: 'success', message: `Import complete: ${imported} events imported` };
         if (errors.length) flash.message += `, ${errors.length} errors`;
 
-        res.render('calendar-import', { flash });
+        if (req.xhr || req.get('Accept')?.includes('json')) {
+            res.json({ success: true, message: flash.message });
+        } else {
+            res.render('calendar-import', { flash });
+        }
     } catch (err) {
         res.status(500).send('Import failed: ' + err.message);
     }
@@ -1755,9 +1759,9 @@ router.post('/calendar/events/:id/delete', async (req, res) => {
     try {
         await db.execute({ sql: 'DELETE FROM calendar_events WHERE id = ?', args: [req.params.id] });
         await logAudit(req.adminUser, 'delete_calendar_event', 'calendar', req.params.id);
-        res.redirect('/admin/calendar?deleted=1');
+        respondOrRedirect(req, res, '/admin/calendar?deleted=1');
     } catch (err) {
-        res.status(500).send('Delete failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1765,9 +1769,9 @@ router.post('/calendar/clear', async (req, res) => {
     try {
         await db.execute('DELETE FROM calendar_events');
         await logAudit(req.adminUser, 'clear_calendar', 'calendar', 'all');
-        res.redirect('/admin/calendar?cleared=1');
+        respondOrRedirect(req, res, '/admin/calendar?cleared=1');
     } catch (err) {
-        res.status(500).send('Clear failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1806,24 +1810,24 @@ router.post('/chat/delete', async (req, res) => {
             args: idList
         });
         await logAudit(req.adminUser, 'delete_chat_messages', 'chat', 'bulk', { count: idList.length });
-        res.redirect('/admin/chat?deleted=1');
+        respondOrRedirect(req, res, '/admin/chat?deleted=1');
     } catch (err) {
-        res.status(500).send('Delete failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
 router.post('/chat/ban', async (req, res) => {
     try {
         const { user_id, reason } = req.body;
-        if (!user_id || !reason) return res.status(400).send('User ID and reason required.');
+        if (!user_id || !reason) return respondOrRedirect(req, res, null, null, new Error('User ID and reason required.'));
         await db.execute({
             sql: 'INSERT OR REPLACE INTO chat_bans (user_id, banned_by, reason) VALUES (?, ?, ?)',
             args: [user_id, req.adminUser?.id, reason]
         });
         await logAudit(req.adminUser, 'ban_chat_user', 'chat', user_id, { reason });
-        res.redirect('/admin/chat?banned=1');
+        respondOrRedirect(req, res, '/admin/chat?banned=1');
     } catch (err) {
-        res.status(500).send('Ban failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1832,9 +1836,9 @@ router.post('/chat/unban', async (req, res) => {
         const { user_id } = req.body;
         await db.execute({ sql: 'DELETE FROM chat_bans WHERE user_id = ?', args: [user_id] });
         await logAudit(req.adminUser, 'unban_chat_user', 'chat', user_id);
-        res.redirect('/admin/chat?unbanned=1');
+        respondOrRedirect(req, res, '/admin/chat?unbanned=1');
     } catch (err) {
-        res.status(500).send('Unban failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1844,9 +1848,9 @@ router.post('/chat/pin/:id', async (req, res) => {
             sql: 'UPDATE chat_messages SET is_pinned = 1 WHERE id = ?',
             args: [req.params.id]
         });
-        res.redirect('/admin/chat');
+        respondOrRedirect(req, res, '/admin/chat');
     } catch (err) {
-        res.status(500).send('Pin failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
@@ -1856,16 +1860,16 @@ router.post('/chat/unpin/:id', async (req, res) => {
             sql: 'UPDATE chat_messages SET is_pinned = 0 WHERE id = ?',
             args: [req.params.id]
         });
-        res.redirect('/admin/chat');
+        respondOrRedirect(req, res, '/admin/chat');
     } catch (err) {
-        res.status(500).send('Unpin failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 
 router.post('/chat/send', async (req, res) => {
     try {
         const { message, parent_id } = req.body;
-        if (!message || !message.trim()) return res.status(400).send('Message is required.');
+        if (!message || !message.trim()) return respondOrRedirect(req, res, null, null, new Error('Message is required.'));
 
         await db.execute({
             sql: `INSERT INTO chat_messages (user_id, name, message, parent_id, message_type, verify_badge)
@@ -1873,9 +1877,9 @@ router.post('/chat/send', async (req, res) => {
             args: [message.trim(), parent_id || null]
         });
 
-        res.redirect('/admin/chat');
+        respondOrRedirect(req, res, '/admin/chat');
     } catch (err) {
-        res.status(500).send('Send failed: ' + err.message);
+        respondOrRedirect(req, res, null, null, err);
     }
 });
 

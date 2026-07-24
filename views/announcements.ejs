@@ -42,7 +42,7 @@
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                     <a href="/admin/announcements/<%= a.id %>/edit" class="text-sm text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Edit</a>
-                    <form action="/admin/announcements/<%= a.id %>/delete" method="POST" onsubmit="return confirm('Delete this announcement?')">
+                    <form action="/admin/announcements/<%= a.id %>/delete" method="POST" data-reload="false" onsubmit="event.preventDefault();if(!confirm('Delete this announcement?'))return;submitForm(this,event)">
                         <button type="submit" class="text-sm text-red-500 hover:text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">Delete</button>
                     </form>
                 </div>

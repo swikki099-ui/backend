@@ -46,7 +46,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <% if (b.is_active) { %>
-                                <form action="/admin/bans/<%= b.id %>/unban" method="POST" class="inline">
+                                <form action="/admin/bans/<%= b.id %>/unban" method="POST" class="inline" onsubmit="submitForm(this,event)">
                                     <button type="submit" class="text-xs font-medium text-green-600 hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors">Lift Ban</button>
                                 </form>
                                 <% } %>

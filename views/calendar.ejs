@@ -15,7 +15,7 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <form method="POST" action="/admin/calendar/source" class="flex items-center gap-2">
+                    <form method="POST" action="/admin/calendar/source" class="flex items-center gap-2" data-reload="false" onsubmit="submitForm(this,event)">
                         <select name="source" class="text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 bg-white">
                             <option value="custom" <%= calSource === 'custom' ? 'selected' : '' %>>Custom Calendar</option>
                             <option value="proxied" <%= calSource === 'proxied' ? 'selected' : '' %>>Proxied Calendar</option>
@@ -30,12 +30,6 @@
                 </div>
             </div>
         </div>
-
-        <% if (flash) { %>
-        <div class="mb-4 px-4 py-3 rounded-xl text-sm font-medium <%= flash.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
-            <%= flash.message %>
-        </div>
-        <% } %>
 
         <% if (calSource === 'custom') { %>
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
@@ -55,7 +49,7 @@
             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <span class="text-sm font-semibold text-gray-700">Custom Calendar Events</span>
                 <% if (events.length > 0) { %>
-                <form method="POST" action="/admin/calendar/clear" onsubmit="return confirm('Clear all custom events? This cannot be undone.')">
+                    <form method="POST" action="/admin/calendar/clear" data-reload="false" onsubmit="event.preventDefault();if(!confirm('Clear all custom events? This cannot be undone.'))return;submitForm(this,event)">
                     <button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">Clear All</button>
                 </form>
                 <% } %>
@@ -92,7 +86,7 @@
                             </td>
                             <td class="px-6 py-4 text-gray-600 max-w-xs truncate"><%= ev.description || '-' %></td>
                             <td class="px-6 py-4 text-right">
-                                <form method="POST" action="/admin/calendar/events/<%= ev.id %>/delete" onsubmit="return confirm('Delete this event?')" style="display:inline">
+                                <form method="POST" action="/admin/calendar/events/<%= ev.id %>/delete" data-reload="false" onsubmit="event.preventDefault();if(!confirm('Delete this event?'))return;submitForm(this,event)" style="display:inline">
                                     <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">Delete</button>
                                 </form>
                             </td>

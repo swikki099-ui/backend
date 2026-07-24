@@ -22,16 +22,10 @@
                 </div>
             </div>
 
-            <% if (typeof flash !== 'undefined' && flash) { %>
-                <div class="mb-6 p-4 rounded-lg <%= flash.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' %>">
-                    <%= flash.message %>
-                </div>
-            <% } %>
-
             <div class="max-w-4xl">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="p-8">
-                        <form action="/admin/profile" method="POST" enctype="multipart/form-data" class="space-y-8">
+                        <form action="/admin/profile" method="POST" enctype="multipart/form-data" class="space-y-8" onsubmit="submitForm(this,event)">
                             
                             <!-- Profile Section -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">

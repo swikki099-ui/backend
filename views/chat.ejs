@@ -14,10 +14,6 @@
             </div>
         </div>
 
-        <% if (locals.flash) { %>
-        <div class="mb-5 px-4 py-3 rounded-xl text-sm font-medium <%= flash.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>"><%= flash.message %></div>
-        <% } %>
-
         <div class="flex gap-6">
             <!-- Messages -->
             <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -72,15 +68,15 @@
                         </div>
                         <div class="flex flex-col gap-1 flex-shrink-0">
                             <% if (m.is_pinned) { %>
-                            <form action="/admin/chat/unpin/<%= m.id %>" method="POST">
+                            <form action="/admin/chat/unpin/<%= m.id %>" method="POST" data-reload="false" onsubmit="submitForm(this,event)">
                                 <button class="text-xs text-yellow-600 hover:text-yellow-800">Unpin</button>
                             </form>
                             <% } else if (!m.is_deleted) { %>
-                            <form action="/admin/chat/pin/<%= m.id %>" method="POST">
+                            <form action="/admin/chat/pin/<%= m.id %>" method="POST" data-reload="false" onsubmit="submitForm(this,event)">
                                 <button class="text-xs text-gray-500 hover:text-yellow-600">Pin</button>
                             </form>
                             <% } %>
-                            <form action="/admin/chat/ban" method="POST" class="inline">
+                            <form action="/admin/chat/ban" method="POST" class="inline" onsubmit="submitForm(this,event)">
                                 <input type="hidden" name="user_id" value="<%= m.user_id %>">
                                 <input type="hidden" name="reason" value="Inappropriate content">
                                 <button class="text-xs text-amber-600 hover:text-amber-800">Ban</button>
@@ -93,7 +89,7 @@
                     <% } %>
                 </div>
                 <!-- Admin Message Composer -->
-                <form action="/admin/chat/send" method="POST" class="border-t border-gray-100 p-4 flex gap-3">
+                <form action="/admin/chat/send" method="POST" class="border-t border-gray-100 p-4 flex gap-3" data-reload="false" onsubmit="submitForm(this,event)">
                     <input type="text" name="message" required placeholder="Send a message as Admin..." class="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">Send</button>
                 </form>
@@ -112,7 +108,7 @@
                             <p class="text-sm font-medium text-gray-900"><%= b.user_name || 'User #' + b.user_id %></p>
                             <p class="text-xs text-gray-400"><%= b.reason %></p>
                         </div>
-                        <form action="/admin/chat/unban" method="POST">
+                        <form action="/admin/chat/unban" method="POST" data-reload="false" onsubmit="submitForm(this,event)">
                             <input type="hidden" name="user_id" value="<%= b.user_id %>">
                             <button class="text-xs text-green-600 hover:text-green-800 font-medium">Unban</button>
                         </form>
@@ -126,7 +122,7 @@
         <div id="banModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Ban User from Chat</h3>
-                <form action="/admin/chat/ban" method="POST">
+                <form action="/admin/chat/ban" method="POST" data-reload="false" onsubmit="submitForm(this,event)">
                     <div class="mb-4">
                         <label class="text-sm font-medium text-gray-700 block mb-1.5">User ID</label>
                         <input type="number" name="user_id" required class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500/30">
@@ -145,26 +141,18 @@
     </main>
 </div>
 
-<form id="deleteForm" action="/admin/chat/delete" method="POST"></form>
-
 <script>
     function selectAll() {
         document.querySelectorAll('.msg-check').forEach(cb => cb.checked = true);
     }
     function deleteSelected() {
         const checked = document.querySelectorAll('.msg-check:checked');
-        if (checked.length === 0) return alert('Select messages to delete.');
+        if (checked.length === 0) return showToast('Select messages to delete.', 'error');
         if (!confirm('Delete ' + checked.length + ' message(s)?')) return;
-        const form = document.getElementById('deleteForm');
-        form.innerHTML = '';
-        checked.forEach(cb => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'ids';
-            input.value = cb.value;
-            form.appendChild(input);
-        });
-        form.submit();
+        const ids = Array.from(checked).map(cb => cb.value);
+        fetch('/admin/chat/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) })
+        .then(async r => { if (!r.ok) throw new Error(await r.text()); showToast('Messages deleted'); setTimeout(() => location.reload(), 1000); })
+        .catch(e => showToast(e.message, 'error'));
     }
 </script>
 </body>
