@@ -1043,12 +1043,6 @@ router.post('/profile', socialUpload.single('profileImage'), async (req, res) =>
     }
 });
 
-router.get('/social/post', (req, res) => {
-    res.render('admin-post-form', { 
-        flash: req.query.success ? { type: 'success', message: 'Post published to Social Hub!' } : null
-    });
-});
-
 router.post('/social/post', socialUpload.fields([{ name: 'media', maxCount: 1 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
     const { content } = req.body;
     try {
