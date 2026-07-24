@@ -22,7 +22,7 @@ const upload = multer({
 // Configure Multer for social uploads (Memory storage)
 const socialUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit (videos can be large)
 });
 
 const libraryUpload = multer({
@@ -35,9 +35,10 @@ const router = express.Router();
 // Dual AJAX / redirect response helper
 function respondOrRedirect(req, res, redirectUrl, data, err) {
     if (err) {
+        const msg = typeof err === 'string' ? err : (err.message || String(err));
         if (req.xhr || req.get('Accept')?.includes('json'))
-            return res.status(500).json({ error: err.message || err });
-        return res.status(500).send(err.message || err);
+            return res.status(500).json({ error: msg });
+        return res.status(500).send(msg);
     }
     if (req.xhr || req.get('Accept')?.includes('json'))
         return res.json({ success: true, ...data });

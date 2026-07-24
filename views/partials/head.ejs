@@ -52,6 +52,7 @@ function submitForm(form, event) {
     .finally(() => { if (btn) { btn.disabled = false; btn.textContent = btn._orig || 'Save'; } });
 }
 function showToast(message, type = 'success') {
+    if (typeof message !== 'string') message = String(message);
     const container = document.getElementById('toastContainer');
     const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
     const colors = { success: 'bg-green-50 border-green-500 text-green-800', error: 'bg-red-50 border-red-500 text-red-800', info: 'bg-blue-50 border-blue-500 text-blue-800' };
