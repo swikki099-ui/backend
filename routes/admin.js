@@ -1221,14 +1221,13 @@ router.get('/app-settings', async (req, res) => {
 });
 
 router.post('/app-settings', async (req, res) => {
-    const { qr_enabled, barcode_enabled, login_enabled, social_enabled, maintenance_mode, maintenance_message } = req.body;
+    const { qr_enabled, barcode_enabled, login_enabled, maintenance_mode, maintenance_message } = req.body;
     
     try {
         const updateData = {
             qr_enabled: qr_enabled === 'on',
             barcode_enabled: barcode_enabled === 'on',
             login_enabled: login_enabled === 'on',
-            social_enabled: social_enabled === 'on',
             maintenance_mode: maintenance_mode === 'on',
             maintenance_message,
             updated_at: new Date(),

@@ -46,16 +46,13 @@ const requireSocialAccess = async (req, res, next) => {
 
         // 2. Oracle Checks
         const [settingsRes, banRes] = await Promise.all([
-            supabase.from('feature_settings').select('social_enabled, maintenance_mode, maintenance_message').eq('id', 1).single(),
+            supabase.from('feature_settings').select('maintenance_mode, maintenance_message').eq('id', 1).single(),
             supabase.from('user_bans').select('reason').eq('college_id', user.college_id).eq('is_active', true).maybeSingle()
         ]);
 
         if (settingsRes.data) {
             if (settingsRes.data.maintenance_mode) {
                 return res.status(503).json({ error: settingsRes.data.maintenance_message || 'System under maintenance.' });
-            }
-            if (!settingsRes.data.social_enabled) {
-                return res.status(503).json({ error: 'The Social Hub is currently locked down by the Administrator.' });
             }
         }
 
