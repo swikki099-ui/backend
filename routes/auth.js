@@ -203,8 +203,8 @@ router.get('/linked-status', async (req, res) => {
 
 /**
  * POST /auth/link-account
- * Link a Supabase user ID to the current user's account.
- * Body: { supabaseUserId: string }
+ * Link a Google account to the current user.
+ * Body: { idToken: string }  — Google ID token from Credential Manager
  */
 router.post('/link-account', async (req, res) => {
     let sessionId = req.headers['authorization'];
@@ -213,20 +213,31 @@ router.post('/link-account', async (req, res) => {
     const session = sessionStore.decrypt(sessionId);
     if (!session || !session.user_id) return res.status(401).json({ error: 'Invalid or expired session' });
 
-    const { supabaseUserId } = req.body;
-    if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId is required' });
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ error: 'idToken is required' });
 
-    // Check if this Supabase user is already linked to another account
+    // Verify the Google ID token with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken
+    });
+
+    if (error || !data?.user) {
+        return res.status(401).json({ error: 'Failed to verify Google identity: ' + (error?.message || 'Unknown error') });
+    }
+
+    const supabaseUserId = data.user.id;
+
+    // Check if already linked to another account
     const existing = await getUserBySupabaseId(supabaseUserId);
     if (existing && existing.id !== session.user_id) {
-        return res.status(409).json({ error: 'This Google/GitHub account is already linked to another user.' });
+        return res.status(409).json({ error: 'This Google account is already linked to another user.' });
     }
 
     await linkSupabaseAccount(session.user_id, supabaseUserId);
 
-    logActivity('link', 'Account Linked', `User #${session.user_id} linked their account to Supabase user ${supabaseUserId}.`, {
-        icon: 'link',
-        color: 'purple',
+    logActivity('link', 'Account Linked', `User #${session.user_id} linked to Supabase user ${supabaseUserId}.`, {
+        icon: 'link', color: 'purple',
         metadata: { user_id: session.user_id, supabaseUserId }
     }).catch(() => {});
 
@@ -235,18 +246,32 @@ router.post('/link-account', async (req, res) => {
 
 /**
  * POST /auth/login-with-oauth
- * Login using a linked Supabase/OAuth account.
- * Body: { supabaseUserId: string }
+ * Login using a linked Google account.
+ * Body: { idToken: string }  — Google ID token from Credential Manager
  */
 router.post('/login-with-oauth', async (req, res) => {
-    const { supabaseUserId } = req.body;
-    if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId is required' });
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ error: 'idToken is required' });
+
+    // Verify the Google ID token with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken
+    });
+
+    if (error || !data?.user) {
+        return res.status(401).json({ error: 'Failed to verify Google identity.' });
+    }
+
+    const supabaseUserId = data.user.id;
 
     // Find the Turso user linked to this Supabase ID
     const user = await getUserBySupabaseId(supabaseUserId);
-    if (!user) return res.status(404).json({ error: 'No linked account found. Please sign in with your college credentials first and link your account.' });
+    if (!user) {
+        return res.status(404).json({ error: 'No linked account found. Sign in with college credentials first and link your account.' });
+    }
 
-    // Decrypt the stored password and authenticate with ERP
+    // Decrypt stored password and authenticate with ERP
     try {
         const password = decryptPassword(user.password_hash);
         const { token } = await loginUser(user.email || user.college_id, password);
@@ -258,10 +283,9 @@ router.post('/login-with-oauth', async (req, res) => {
             token
         });
 
-        logActivity('login', 'OAuth Login', `${user.name} (${user.roll_no}) logged in via OAuth.`, {
-            icon: 'user',
-            color: 'purple',
-            metadata: { user_id: user.id, provider: 'supabase' }
+        logActivity('login', 'OAuth Login', `${user.name} (${user.roll_no}) logged in via Google.`, {
+            icon: 'user', color: 'purple',
+            metadata: { user_id: user.id, provider: 'google' }
         }).catch(() => {});
 
         res.json({
