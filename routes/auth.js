@@ -1,7 +1,6 @@
 const express = require('express');
 const { checkConnection, supabase } = require('../db');
 const { loginAndSync, getUserById } = require('../services/authService');
-const { loginUser } = require('../services/apiService');
 const sessionStore = require('../utils/sessionStore');
 const { logActivity } = require('../utils/activityLogger');
 
