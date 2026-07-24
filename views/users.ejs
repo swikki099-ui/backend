@@ -209,7 +209,7 @@
         try {
             const res = await fetch('/admin/users/' + id + '/action', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 body: '_action=ban&reason=' + encodeURIComponent(reason) + (expires_at ? '&expires_at=' + encodeURIComponent(expires_at) : '')
             });
             if (!res.ok) { const t = await res.text(); throw new Error(t); }
@@ -228,7 +228,7 @@
         try {
             const res = await fetch('/admin/users/' + id + '/action', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 body: '_action=delete'
             });
             if (!res.ok) { const t = await res.text(); throw new Error(t); }
