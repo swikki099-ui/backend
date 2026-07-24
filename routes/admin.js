@@ -35,7 +35,7 @@ const router = express.Router();
 // Dual AJAX / redirect response helper
 function respondOrRedirect(req, res, redirectUrl, data, err) {
     if (err) {
-        const msg = typeof err === 'string' ? err : (err.message || String(err));
+        const msg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
         if (req.xhr || req.get('Accept')?.includes('json'))
             return res.status(500).json({ error: msg });
         return res.status(500).send(msg);
