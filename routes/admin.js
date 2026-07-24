@@ -1318,9 +1318,17 @@ router.post('/library/upload', libraryUpload.single('document'), async (req, res
         });
 
         await logAudit(req.adminUser, 'upload_library_doc', 'library', result.fileName, { caption });
-        res.redirect('/admin/library?success=1');
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            res.json({ success: true });
+        } else {
+            res.redirect('/admin/library?success=1');
+        }
     } catch (err) {
-        res.status(500).send('Upload failed: ' + err.message);
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.status(500).send('Upload failed: ' + err.message);
+        }
     }
 });
 
@@ -1355,9 +1363,17 @@ router.post('/library/:id/delete', async (req, res) => {
         }
         await db.execute({ sql: 'DELETE FROM library_documents WHERE id = ?', args: [req.params.id] });
         await logAudit(req.adminUser, 'delete_library_doc', 'library', req.params.id);
-        res.redirect('/admin/library?deleted=1');
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            res.json({ success: true });
+        } else {
+            res.redirect('/admin/library?deleted=1');
+        }
     } catch (err) {
-        res.status(500).send('Delete failed: ' + err.message);
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            res.status(500).json({ error: err.message });
+        } else {
+            res.status(500).send('Delete failed: ' + err.message);
+        }
     }
 });
 

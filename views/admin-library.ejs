@@ -2,10 +2,6 @@
 <div class="flex">
     <%- include('partials/sidebar') %>
     <main class="flex-1 ml-64 p-8 min-h-screen bg-gray-50">
-        <% if (locals.flash) { %>
-        <div class="mb-6 px-4 py-3 rounded-xl text-sm font-medium <%= flash.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>"><%= flash.message %></div>
-        <% } %>
-
         <!-- Header with search + upload -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
@@ -70,8 +66,7 @@
                         <a href="/admin/library/download/<%= doc.id %>" target="_blank" class="w-8 h-8 bg-white/90 backdrop-blur rounded-lg flex items-center justify-center text-gray-600 hover:text-blue-600 shadow-sm" title="Download">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         </a>
-                        <form action="/admin/library/<%= doc.id %>/delete" method="POST" onsubmit="return confirm('Delete this document?')">
-                            <button type="submit" class="w-8 h-8 bg-white/90 backdrop-blur rounded-lg flex items-center justify-center text-gray-600 hover:text-red-600 shadow-sm" title="Delete">
+                        <button onclick="deleteDoc('<%= doc.id %>', this)" class="w-8 h-8 bg-white/90 backdrop-blur rounded-lg flex items-center justify-center text-gray-600 hover:text-red-600 shadow-sm" title="Delete">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
                         </form>
@@ -121,9 +116,7 @@
                         <td class="px-6 py-4 text-gray-500"><%= new Date(doc.created_at + 'Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) %></td>
                         <td class="px-6 py-4 text-right">
                             <a href="/admin/library/download/<%= doc.id %>" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3 transition-colors">Download</a>
-                            <form action="/admin/library/<%= doc.id %>/delete" method="POST" class="inline" onsubmit="return confirm('Delete this document?')">
-                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium transition-colors">Delete</button>
-                            </form>
+                            <button onclick="deleteDoc('<%= doc.id %>')" class="text-red-600 hover:text-red-800 text-sm font-medium transition-colors">Delete</button>
                         </td>
                     </tr>
                     <% } %>
@@ -146,10 +139,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <form action="/admin/library/upload" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <form id="uploadForm" class="space-y-4">
             <div>
                 <label class="text-sm font-medium text-gray-700 block mb-1.5">Caption *</label>
-                <input type="text" name="caption" required
+                <input type="text" name="caption" id="captionInput" required
                        class="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                        placeholder="e.g. Maths Unit 1 Notes">
             </div>
@@ -160,7 +153,7 @@
                 <p id="fileName" class="text-xs text-gray-400 mt-1 hidden"></p>
             </div>
             <div class="flex gap-3 pt-2">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Upload</button>
+                <button type="submit" id="uploadBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Upload</button>
                 <button type="button" onclick="document.getElementById('uploadModal').classList.add('hidden')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-6 py-2.5 rounded-xl transition-colors">Cancel</button>
             </div>
         </form>
@@ -175,6 +168,39 @@ document.getElementById('fileInput')?.addEventListener('change', function() {
         p.classList.remove('hidden');
     }
 });
+
+document.getElementById('uploadForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true; btn.textContent = 'Uploading...';
+    const fd = new FormData(this);
+    try {
+        const r = await fetch('/admin/library/upload', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error(await r.text());
+        showToast('Document uploaded successfully');
+        document.getElementById('uploadModal').classList.add('hidden');
+        this.reset(); document.getElementById('fileName').classList.add('hidden');
+        setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+        showToast(e.message, 'error');
+    } finally {
+        btn.disabled = false; btn.textContent = 'Upload';
+    }
+});
+
+async function deleteDoc(id, btn) {
+    if (!confirm('Delete this document?')) return;
+    if (btn) btn.disabled = true;
+    try {
+        const r = await fetch('/admin/library/' + id + '/delete', { method: 'POST' });
+        if (!r.ok) throw new Error(await r.text());
+        showToast('Document deleted');
+        setTimeout(() => location.reload(), 800);
+    } catch (e) {
+        showToast(e.message, 'error');
+        if (btn) btn.disabled = false;
+    }
+}
 </script>
 
 </body>
