@@ -1,6 +1,7 @@
 const express = require('express');
 const { checkConnection, supabase } = require('../db');
-const { loginAndSync, getUserById } = require('../services/authService');
+const { loginAndSync, getUserById, encryptPassword, decryptPassword, getLinkedSupabaseId, linkSupabaseAccount, getUserBySupabaseId } = require('../services/authService');
+const { loginUser } = require('../services/apiService');
 const sessionStore = require('../utils/sessionStore');
 const { logActivity } = require('../utils/activityLogger');
 
@@ -184,6 +185,102 @@ router.get('/me', async (req, res) => {
     }
 });
 
+
+/**
+ * GET /auth/linked-status
+ * Check if the current user has linked a Supabase account.
+ */
+router.get('/linked-status', async (req, res) => {
+    let sessionId = req.headers['authorization'];
+    if (!sessionId) return res.status(401).json({ error: 'No authorization session found' });
+    if (sessionId.toLowerCase().startsWith('bearer ')) sessionId = sessionId.slice(7);
+    const session = sessionStore.decrypt(sessionId);
+    if (!session || !session.user_id) return res.status(401).json({ error: 'Invalid or expired session' });
+
+    const supabaseId = await getLinkedSupabaseId(session.user_id);
+    res.json({ linked: !!supabaseId, supabaseUserId: supabaseId || null });
+});
+
+/**
+ * POST /auth/link-account
+ * Link a Supabase user ID to the current user's account.
+ * Body: { supabaseUserId: string }
+ */
+router.post('/link-account', async (req, res) => {
+    let sessionId = req.headers['authorization'];
+    if (!sessionId) return res.status(401).json({ error: 'No authorization session found' });
+    if (sessionId.toLowerCase().startsWith('bearer ')) sessionId = sessionId.slice(7);
+    const session = sessionStore.decrypt(sessionId);
+    if (!session || !session.user_id) return res.status(401).json({ error: 'Invalid or expired session' });
+
+    const { supabaseUserId } = req.body;
+    if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId is required' });
+
+    // Check if this Supabase user is already linked to another account
+    const existing = await getUserBySupabaseId(supabaseUserId);
+    if (existing && existing.id !== session.user_id) {
+        return res.status(409).json({ error: 'This Google/GitHub account is already linked to another user.' });
+    }
+
+    await linkSupabaseAccount(session.user_id, supabaseUserId);
+
+    logActivity('link', 'Account Linked', `User #${session.user_id} linked their account to Supabase user ${supabaseUserId}.`, {
+        icon: 'link',
+        color: 'purple',
+        metadata: { user_id: session.user_id, supabaseUserId }
+    }).catch(() => {});
+
+    res.json({ success: true, message: 'Account linked successfully' });
+});
+
+/**
+ * POST /auth/login-with-oauth
+ * Login using a linked Supabase/OAuth account.
+ * Body: { supabaseUserId: string }
+ */
+router.post('/login-with-oauth', async (req, res) => {
+    const { supabaseUserId } = req.body;
+    if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId is required' });
+
+    // Find the Turso user linked to this Supabase ID
+    const user = await getUserBySupabaseId(supabaseUserId);
+    if (!user) return res.status(404).json({ error: 'No linked account found. Please sign in with your college credentials first and link your account.' });
+
+    // Decrypt the stored password and authenticate with ERP
+    try {
+        const password = decryptPassword(user.password_hash);
+        const { token } = await loginUser(user.email || user.college_id, password);
+
+        const sessionId = sessionStore.encrypt({
+            user_id: user.id,
+            email: user.email,
+            password,
+            token
+        });
+
+        logActivity('login', 'OAuth Login', `${user.name} (${user.roll_no}) logged in via OAuth.`, {
+            icon: 'user',
+            color: 'purple',
+            metadata: { user_id: user.id, provider: 'supabase' }
+        }).catch(() => {});
+
+        res.json({
+            message: 'Login successful',
+            sessionId,
+            user: {
+                id: user.id,
+                name: user.name,
+                roll_no: user.roll_no,
+                email: user.email,
+                profile_image: user.profile_image,
+                profile_complete: !!user.profile_complete
+            }
+        });
+    } catch (error) {
+        console.error('❌ OAuth login error:', error);
+        res.status(401).json({ error: 'Failed to authenticate with college system. Try logging in with email and password to refresh your credentials.' });
+    }
+});
 
 /**
  * POST /auth/logout
