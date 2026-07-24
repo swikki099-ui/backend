@@ -79,22 +79,7 @@ async function initDb() {
       "ALTER TABLE social_posts ADD COLUMN b2_file_id TEXT",
       "ALTER TABLE social_posts ADD COLUMN b2_file_name TEXT",
       "ALTER TABLE chat_messages ADD COLUMN voice_url TEXT",
-      "ALTER TABLE users ADD COLUMN password_hash TEXT",
-      "ALTER TABLE users ADD COLUMN password_hash TEXT",
-      "ALTER TABLE users ADD COLUMN linked_supabase_id TEXT"
     ];
-
-    // 9. Linked Accounts Table
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS linked_accounts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        provider TEXT NOT NULL,
-        provider_user_id TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, provider)
-      );
-    `);
 
     for (const sql of columns) {
       try {
