@@ -56,75 +56,77 @@
             Calendar
         </a>
 
-        <div class="pt-2 pb-1">
-            <p class="text-xs font-semibold text-gray-600 uppercase px-3 tracking-wider">Social Media</p>
-        </div>
-
-        <a href="/admin/social" class="nav-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/social') && !currentPath.startsWith('/social/post') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+        <!-- Social Media Dropdown -->
+        <% const smActive = currentPath.startsWith('/social') || currentPath.startsWith('/chat') || currentPath.startsWith('/profile'); %>
+        <button onclick="toggleDropdown('socialMediaMenu', this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= smActive ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
             <div class="flex items-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                Social Moderation
+                Social Media
             </div>
-            <% if (typeof pendingReportsCount !== 'undefined' && pendingReportsCount > 0) { %>
-                <span class="flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-            <% } %>
-        </a>
-
-        <a href="/admin/chat" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/chat') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Chat Control
-        </a>
-
-        <a href="/admin/profile" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/profile') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Admin Profile
-        </a>
-
-        <a href="/admin/social/post" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath === '/social/post' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            Post to Social Hub
-        </a>
-
-        <div class="pt-2 pb-1">
-            <p class="text-xs font-semibold text-gray-600 uppercase px-3 tracking-wider">Broadcast</p>
+            <svg class="w-4 h-4 transition-transform duration-200 <%= smActive ? 'rotate-180' : '' %>" id="socialMediaMenuChevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="socialMediaMenu" class="space-y-1 <%= smActive ? '' : 'hidden' %>">
+            <a href="/admin/social" class="nav-link flex items-center justify-between pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/social') && !currentPath.startsWith('/social/post') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Social Moderation
+                <% if (typeof pendingReportsCount !== 'undefined' && pendingReportsCount > 0) { %>
+                    <span class="flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                <% } %>
+            </a>
+            <a href="/admin/chat" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/chat') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Chat Control
+            </a>
+            <a href="/admin/profile" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/profile') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Admin Profile
+            </a>
+            <a href="/admin/social/post" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath === '/social/post' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Post to Social Hub
+            </a>
         </div>
 
-        <a href="/admin/announcements" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/announcements') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg>
-            Announcements
-        </a>
-
-        <a href="/admin/mail" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath === '/mail' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            Mailing System
-        </a>
-
-        <a href="/admin/mail/templates" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/mail/templates') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Mail Templates
-        </a>
-
-        <div class="pt-2 pb-1">
-            <p class="text-xs font-semibold text-gray-600 uppercase px-3 tracking-wider">Settings</p>
+        <!-- Broadcast Dropdown -->
+        <% const bcActive = currentPath.startsWith('/announcements') || currentPath === '/mail' || currentPath.startsWith('/mail/templates'); %>
+        <button onclick="toggleDropdown('broadcastMenu', this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= bcActive ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"/></svg>
+                Broadcast
+            </div>
+            <svg class="w-4 h-4 transition-transform duration-200 <%= bcActive ? 'rotate-180' : '' %>" id="broadcastMenuChevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="broadcastMenu" class="space-y-1 <%= bcActive ? '' : 'hidden' %>">
+            <a href="/admin/announcements" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/announcements') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Announcements
+            </a>
+            <a href="/admin/mail" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath === '/mail' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Mailing System
+            </a>
+            <a href="/admin/mail/templates" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/mail/templates') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Mail Templates
+            </a>
         </div>
 
-        <a href="/admin/app-update" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/app-update') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            App Updates
-        </a>
-
-        <a href="/admin/app-settings" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/app-settings') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Feature Toggles
-        </a>
-
-        <a href="/admin/media-settings" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/media-settings') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            Media Settings
-        </a>
+        <!-- Settings Dropdown -->
+        <% const stActive = currentPath.startsWith('/app-update') || currentPath.startsWith('/app-settings') || currentPath.startsWith('/media-settings'); %>
+        <button onclick="toggleDropdown('settingsMenu', this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <%= stActive ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </div>
+            <svg class="w-4 h-4 transition-transform duration-200 <%= stActive ? 'rotate-180' : '' %>" id="settingsMenuChevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="settingsMenu" class="space-y-1 <%= stActive ? '' : 'hidden' %>">
+            <a href="/admin/app-update" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/app-update') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                App Updates
+            </a>
+            <a href="/admin/app-settings" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/app-settings') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Feature Toggles
+            </a>
+            <a href="/admin/media-settings" class="nav-link flex items-center gap-3 pl-11 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 <%= currentPath.startsWith('/media-settings') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white' %>">
+                Media Settings
+            </a>
+        </div>
 
         <div class="pt-2 pb-1">
             <p class="text-xs font-semibold text-gray-600 uppercase px-3 tracking-wider">System</p>
@@ -173,3 +175,11 @@
         </div>
     </div>
 </div>
+<script>
+function toggleDropdown(id, btn) {
+    const menu = document.getElementById(id);
+    const chevron = btn.querySelector('svg:last-child');
+    menu.classList.toggle('hidden');
+    if (chevron) chevron.classList.toggle('rotate-180');
+}
+</script>
